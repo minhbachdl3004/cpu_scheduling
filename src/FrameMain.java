@@ -1,7 +1,11 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.StringTokenizer;
 
 import javax.swing.*;
 
@@ -10,7 +14,7 @@ public class FrameMain
 	implements ActionListener, ItemListener	{
 	
 	private static final long serialVersionUID = 1L;
-	
+
 	List<Job> _jobs;
 	Algorithm _algorithm;
 	
@@ -22,16 +26,13 @@ public class FrameMain
 	JComboBox<String> _combo_jobs;
 	
 	JLabel _lbl_arrival;
-	JTextField _txt_arrival;
+	JLabel _txt_arrival;
 	
 	JLabel _lbl_burst;
-	JTextField _txt_burst;
-	
-	JLabel _lbl_deadline;
-	JTextField _txt_deadline;
-	
+	JLabel _txt_burst;
+
 	JLabel _lbl_priority;
-	JTextField _txt_priority;
+	JLabel _txt_priority;
 	
 	CheckboxGroup _cbg_algo;
 	Checkbox _cb_FCFS;
@@ -47,10 +48,7 @@ public class FrameMain
 	JButton _btn_delete;
 
 	JButton _btn_run;
-	
-	TextArea _txt_result_tt;
-	TextArea _txt_result_wt;
-	
+
 	public FrameMain()	{
 		_jobs = new ArrayList<Job>();
 		_algorithm = Algorithm.FCFS;
@@ -73,23 +71,19 @@ public class FrameMain
 		
 		_lbl_arrival = new JLabel("Arrival Time: ");
 		_lbl_arrival.setBounds(20, 160, 100, 20);
-		_txt_arrival = new JTextField();
+		_txt_arrival = new JLabel();
 		_txt_arrival.setBounds(100, 160, 50, 20);
 		
 		_lbl_burst = new JLabel("Burst Time: ");
 		_lbl_burst.setBounds(20, 185, 100, 20);
-		_txt_burst = new JTextField();
+		_txt_burst = new JLabel();
 		_txt_burst.setBounds(100, 185, 50, 20);
-		
-		_lbl_deadline = new JLabel("Deadline: ");
-		_lbl_deadline.setBounds(190, 160, 100, 20);
-		_txt_deadline = new JTextField();
-		_txt_deadline.setBounds(250, 160, 50, 20);
+
 		
 		_lbl_priority = new JLabel("Priority: ");
-		_lbl_priority.setBounds(190, 185, 100, 20);
-		_txt_priority = new JTextField();
-		_txt_priority.setBounds(250, 185, 50, 20);
+		_lbl_priority.setBounds(190, 160, 100, 20);
+		_txt_priority = new JLabel();
+		_txt_priority.setBounds(250, 160, 50, 20);
 		
 		_cbg_algo = new CheckboxGroup();
 		
@@ -104,21 +98,15 @@ public class FrameMain
 		_cb_PRIO = new Checkbox("Priority (Prio)", false, _cbg_algo);
 		_cb_PRIO.setBounds(325, 180, 200, 20);
 		_cb_PRIO.addItemListener(this);
-		
-		_cb_DEADLINE = new Checkbox("Deadline", false, _cbg_algo);
-		_cb_DEADLINE.setBounds(325, 205, 200, 20);
-		_cb_DEADLINE.addItemListener(this);
+
 		
 		_cb_PPRIO = new Checkbox("Preemptive Priority (P-Prio)", false, _cbg_algo);
-		_cb_PPRIO.setBounds(325, 230, 200, 20);
+		_cb_PPRIO.setBounds(325, 205, 200, 20);
 		_cb_PPRIO.addItemListener(this);
-		
-		_cb_SRTF = new Checkbox("Shortest Remaining Time First (SRTF)", false, _cbg_algo);
-		_cb_SRTF.setBounds(325, 255, 250, 20);
-		_cb_SRTF.addItemListener(this);
+
 		
 		_cb_RR = new Checkbox("Round Robin (RR)", false, _cbg_algo);
-		_cb_RR.setBounds(325, 280, 200, 20);
+		_cb_RR.setBounds(325, 230, 200, 20);
 		_cb_RR.addItemListener(this);
 		
 		_btn_add = new JButton("Add");
@@ -132,19 +120,19 @@ public class FrameMain
 		_btn_delete = new JButton("Delete");
 		_btn_delete.setBounds(210, 220, 70, 24);
 		_btn_delete.addActionListener(this);
-		
+
 		_btn_run = new JButton("Run");
 		_btn_run.setBounds(140, 270, 60, 24);
 		_btn_run.addActionListener(this);
-		
-		_txt_result_tt = new TextArea("", 540, 120, TextArea.SCROLLBARS_VERTICAL_ONLY);
-		_txt_result_tt.setBounds(20, 320, 260, 120);
-		_txt_result_tt.setEditable(false);
-		
-		_txt_result_wt = new TextArea("", 540, 120, TextArea.SCROLLBARS_VERTICAL_ONLY);
-		_txt_result_wt.setBounds(300, 320, 260, 120);
-		_txt_result_wt.setEditable(false);
-		
+
+//		_txt_result_tt = new TextArea("", 540, 120, TextArea.SCROLLBARS_VERTICAL_ONLY);
+//		_txt_result_tt.setBounds(20, 320, 260, 120);
+//		_txt_result_tt.setEditable(false);
+//
+//		_txt_result_wt = new TextArea("", 540, 120, TextArea.SCROLLBARS_VERTICAL_ONLY);
+//		_txt_result_wt.setBounds(300, 320, 260, 120);
+//		_txt_result_wt.setEditable(false);
+
 		this.setLayout(null);
 		
 		this.add(_scrollpane);
@@ -157,29 +145,22 @@ public class FrameMain
 		
 		this.add(_lbl_burst);
 		this.add(_txt_burst);
-		
-		this.add(_lbl_deadline);
-		this.add(_txt_deadline);
-		
+
 		this.add(_lbl_priority);
 		this.add(_txt_priority);
 		
 		this.add(_cb_FCFS);
 		this.add(_cb_SJF);
 		this.add(_cb_PRIO);
-		this.add(_cb_DEADLINE);
 		this.add(_cb_PPRIO);
-		this.add(_cb_SRTF);
 		this.add(_cb_RR);
 		
 		this.add(_btn_add);
 		this.add(_btn_save);
 		this.add(_btn_delete);
-		
+
 		this.add(_btn_run);
-		
-		this.add(_txt_result_tt);
-		this.add(_txt_result_wt);
+
 		
 		this.setSize(600, 500);
 		this.setTitle("CPU Scheduling Algorithms");
@@ -200,7 +181,6 @@ public class FrameMain
 			_txt_arrival.setText("");
 			_txt_burst.setText("");
 			_txt_priority.setText("");
-			_txt_deadline.setText("");
 			return;
 		}
 		int index = _combo_jobs.getSelectedIndex();
@@ -208,10 +188,6 @@ public class FrameMain
 		_txt_arrival.setText("" + _jobs.get(index).getArrivalTime());
 		_txt_burst.setText("" + _jobs.get(index).getBurstTime());
 		_txt_priority.setText("" + _jobs.get(index).getPriority());
-		if(_jobs.get(index).getDeadline() == Double.POSITIVE_INFINITY)
-			_txt_deadline.setText("none");
-		else 
-			_txt_deadline.setText("" + _jobs.get(index).getDeadline());
 	}
 	
 	void drawGanttChart(GanttChart _gantt_chart)	{
@@ -239,48 +215,49 @@ public class FrameMain
 	}
 	
 	public void actionPerformed(ActionEvent e)	{
-		if(e.getSource() == _btn_add)	{
-			_jobs.add( 
-					new Job(_jobs.size()+1, 0, 0, 
-							_jobs.size()+1, Double.POSITIVE_INFINITY)
-				);
-			refreshList();
-			_combo_jobs.setSelectedIndex(_jobs.size()-1);
+		try {
+			File file = new File(new File("src/input.txt").getAbsolutePath());
+			Scanner sc = new Scanner(file);
+			int index = 0;
+			while (sc.hasNextLine()) {
+				if (e.getSource() == _btn_add) {
+					_jobs.add(
+							new Job(_jobs.size() + 1, 0, 0,
+									0, Double.POSITIVE_INFINITY)
+					);
+					refreshList();
+					_combo_jobs.setSelectedIndex(_jobs.size() - 1);
+					_btn_add.setEnabled(false);
+				}
+				String input = sc.nextLine();
+				StringTokenizer st = new StringTokenizer(input, ";");
+				String arrival = st.nextToken();
+				String burst = st.nextToken();
+				String priority = st.nextToken();
+				if (_jobs.isEmpty()) return;
+				if (e.getSource() == _btn_save) {
+					try {
+						_jobs.get(index).setArrivalTime(Double.parseDouble(arrival));
+					} catch (Exception ex) {
+					}
+					try {
+						_jobs.get(index).setBurstTime(Double.parseDouble(burst));
+					} catch (Exception ex) {
+					}
+					try {
+						_jobs.get(index).setPriority(Double.parseDouble(priority));
+					} catch (Exception ex) {
+					}
+					refreshDetails();
+					index++;
+					JOptionPane.showMessageDialog(null, "Job # " + (index) + " Saved",
+							"Save", JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+		} catch (FileNotFoundException ex) {
+			ex.printStackTrace();
 		}
-		if(e.getSource() == _btn_save)	{
-			if(_jobs.isEmpty())	return;
-			int index = _combo_jobs.getSelectedIndex();
-			try {
-				_jobs.get(index).setArrivalTime(
-						Double.parseDouble(_txt_arrival.getText())
-					);
-			}catch(Exception ex)	{		
-			}
-			try {
-				_jobs.get(index).setBurstTime(
-						Double.parseDouble(_txt_burst.getText())
-					);
-			}catch(Exception ex)	{		
-			}
-			try {
-				if(_txt_deadline.getText().equalsIgnoreCase("none"))
-					_jobs.get(index).setDeadline(Double.POSITIVE_INFINITY);
-				else
-					_jobs.get(index).setDeadline(
-							Double.parseDouble(_txt_deadline.getText())
-						);
-			}catch(Exception ex)	{		
-			}
-			try {
-				_jobs.get(index).setPriority(
-						Double.parseDouble(_txt_priority.getText())
-					);
-			}catch(Exception ex)	{		
-			}
-			refreshDetails();
-			JOptionPane.showMessageDialog(null, "Job # " + (index+1) +" Saved", 
-					"Save", JOptionPane.INFORMATION_MESSAGE);
-		}
+
 		if(e.getSource() == _btn_delete)	{
 			if(_jobs.isEmpty())	return;
 			int index = _combo_jobs.getSelectedIndex();
@@ -291,21 +268,17 @@ public class FrameMain
 		}
 		if(e.getSource() == _btn_run)	{
 			if(_jobs.isEmpty())	{
-				_txt_result_tt.setText("");
-				_txt_result_wt.setText("");
 				return;
 			}
 			for(int i = 1; i <= _jobs.size(); i++)
 				_jobs.get(i-1).setJobNumber(i);
 			CPU_Scheduling _solver = new CPU_Scheduling(_jobs, _algorithm);
 			if( _solver.solve() )	{
-				_txt_result_tt.setText(_solver.getResultTT());
-				_txt_result_wt.setText(_solver.getResultWT());
 				drawGanttChart(_solver.getGanttChart());
 			}
 		}
 	}
-	
+
 	public void itemStateChanged(ItemEvent e)	{
 		if(_cb_FCFS.getState())	{
 			_algorithm = Algorithm.FCFS;
@@ -316,20 +289,13 @@ public class FrameMain
 		if(_cb_PRIO.getState())	{
 			_algorithm = Algorithm.Prio;
 		}
-		if(_cb_DEADLINE.getState())	{
-			_algorithm = Algorithm.Deadline;
-		}
 		if(_cb_PPRIO.getState())	{
 			_algorithm = Algorithm.PPrio;
-		}
-		if(_cb_SRTF.getState())	{
-			_algorithm = Algorithm.SRTF;
 		}
 		if(_cb_RR.getState())	{
 			_algorithm = Algorithm.RR;
 		}
-		
-		refreshDetails();
+		//refreshDetails();
 	}
 
 	public static void main(String[] args) {

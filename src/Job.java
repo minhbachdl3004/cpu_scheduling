@@ -37,9 +37,7 @@ public class Job	{
 	public void setJobNumber(int n)	{
 		_job_number = n;
 	}
-	public void setArrivalTime(double d)	{
-		_arrival = d;
-	}
+	public void setArrivalTime(double d) {_arrival = d;}
 	public void setBurstTime(double d)	{
 		_burst = d;
 	}

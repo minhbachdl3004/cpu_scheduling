@@ -7,7 +7,7 @@ public class CPU_Scheduling {
 	List<Job> _jobs; 
 	Algorithm _algorithm;
 	
-	List<Job> _joblist;
+	static List<Job> _joblist;
 	PriorityQueue _queue;
 	GanttChart _gantt_chart;
 	
@@ -26,42 +26,13 @@ public class CPU_Scheduling {
 		this._joblist = copyList(_joblist);
 		this._queue = new PriorityQueue(_algorithm);
 		this._gantt_chart = new GanttChart();
-		
-		this._TT = new ArrayList<>();
-		this._WT = new ArrayList<>();
-		this._TTAve = 0.0;
-		this._WTAve = 0.0;
-		
-		this._result_tt = new String();
-		this._result_wt = new String();
-	}
-	
-	List<Double> getTT()	{
-		return _TT;
-	}
-	List<Double> getWT()	{
-		return _WT;
-	}
-	
-	double getTTAve()	{
-		return _TTAve;
-	}
-	
-	double getWTAve()	{
-		return _WTAve;
+
 	}
 	
 	GanttChart getGanttChart()	{
 		return _gantt_chart;
 	}
-	
-	String getResultTT()	{
-		return _result_tt;
-	}
-	
-	String getResultWT()	{
-		return _result_wt;
-	}
+
 	
 	boolean solve()	{
 		sortArrival();
@@ -70,25 +41,8 @@ public class CPU_Scheduling {
 			_algorithm == Algorithm.Prio )	{
 			nonPreemptiveAlgo();
 		}
-		else if( _algorithm == Algorithm.PPrio ||
-				 _algorithm == Algorithm.SRTF )	{
+		else if( _algorithm == Algorithm.PPrio)	{
 			preemptiveAlgo();
-		}
-		else if(_algorithm == Algorithm.Deadline)	{
-			preemptiveAlgo();
-			boolean success = true;
-			String prompt = "ERROR in deadline input\n\n";
-			for(int i = 0; i < _jobs.size(); i++)	{
-				if( _jobs.get(i).getJobFinish() > _jobs.get(i).getDeadline() )	{
-					success = false;
-					prompt += "Job " + _jobs.get(i).getJobNumber() + " was not able to finish.\n";
-				}
-			}
-			if(!success)	{	
-				JOptionPane.showMessageDialog(null, prompt, 
-						"Input Error", JOptionPane.ERROR_MESSAGE);
-				return false;
-			}
 		}
 		else if(_algorithm == Algorithm.RR)	{
 			double q = 0.0;
@@ -104,7 +58,7 @@ public class CPU_Scheduling {
 			}	
 			RR(q);
 		}
-		computeTTWT();
+		//computeTTWT();
 		return true;
 	}
 	
@@ -220,38 +174,38 @@ public class CPU_Scheduling {
 		}
 	}
 	
-	void computeTTWT()	{
-		String r = new String();
-		
-		r = "\tTurnaround Time (tt)\n";
-		r += "\tfinish time - arrival time\n\n";
-		
-		for(int i = 0; i < _jobs.size(); i++)	{
-			_TT.add( _jobs.get(i).getJobFinish()- _jobs.get(i).getArrivalTime() );
-			r += "tt" + _jobs.get(i).getJobNumber() + "   " + 
-					_jobs.get(i).getJobFinish() + " - " + _jobs.get(i).getJobFinish() +
-					" = " + _TT.get(i) + "\n";
-			_TTAve += _TT.get(i);
-		}
-		_TTAve /= _jobs.size();
-		r += "Turnaround time Average: " + _TTAve + "\n\n";
-		
-		_result_tt = r;
-		
-		r = "\tWaiting Time (wt)\n";
-		r += "\tturnaround time - burst time\n\n";
-		for(int i = 0; i < _jobs.size(); i++)	{
-			_WT.add( _TT.get(i) - _jobs.get(i).getBurstTime() );
-			r += "tt" + _jobs.get(i).getJobNumber() + "   " + 
-					_TT.get(i) + " - " + _jobs.get(i).getBurstTime() +
-					" = " + _WT.get(i) + "\n";
-			_WTAve += _WT.get(i);
-		}
-		_WTAve /= _jobs.size();
-		r += "Waiting time Average: " + _WTAve + "\n\n";
-		
-		_result_wt = r;
-	}
+//	void computeTTWT()	{
+//		String r = new String();
+//
+//		r = "\tTurnaround Time (tt)\n";
+//		r += "\tfinish time - arrival time\n\n";
+//
+//		for(int i = 0; i < _jobs.size(); i++)	{
+//			_TT.add( _jobs.get(i).getJobFinish()- _jobs.get(i).getArrivalTime() );
+//			r += "tt" + _jobs.get(i).getJobNumber() + "   " +
+//					_jobs.get(i).getJobFinish() + " - " + _jobs.get(i).getJobFinish() +
+//					" = " + _TT.get(i) + "\n";
+//			_TTAve += _TT.get(i);
+//		}
+//		_TTAve /= _jobs.size();
+//		r += "Turnaround time Average: " + _TTAve + "\n\n";
+//
+//		_result_tt = r;
+//
+//		r = "\tWaiting Time (wt)\n";
+//		r += "\tturnaround time - burst time\n\n";
+//		for(int i = 0; i < _jobs.size(); i++)	{
+//			_WT.add( _TT.get(i) - _jobs.get(i).getBurstTime() );
+//			r += "tt" + _jobs.get(i).getJobNumber() + "   " +
+//					_TT.get(i) + " - " + _jobs.get(i).getBurstTime() +
+//					" = " + _WT.get(i) + "\n";
+//			_WTAve += _WT.get(i);
+//		}
+//		_WTAve /= _jobs.size();
+//		r += "Waiting time Average: " + _WTAve + "\n\n";
+//
+//		_result_wt = r;
+//	}
 	
 	void enqueue(Job job)	{
 		_joblist.add(job);
@@ -264,7 +218,7 @@ public class CPU_Scheduling {
 		_joblist.remove(0);
 		return temp;
 	}
-	
+
 	void delete(Job job)	{
 		for(int i = 0; i < _joblist.size(); i++)	
 			if( job == _joblist.get(i) )	{
@@ -304,5 +258,5 @@ public class CPU_Scheduling {
 		}
 		return temp;
 	}
-	
+
 }

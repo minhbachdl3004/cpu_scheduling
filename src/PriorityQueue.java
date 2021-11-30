@@ -53,7 +53,7 @@ public class PriorityQueue	{
 				_queue.add(j, temp);
 			}
 		}
-		else if( _algorithm == Algorithm.SJF || _algorithm == Algorithm.SRTF )	{
+		else if( _algorithm == Algorithm.SJF)	{
 			Job temp = new Job();
 			for(i=1; i<_queue.size(); i++)	{
 				temp = _queue.get(i);
@@ -73,20 +73,6 @@ public class PriorityQueue	{
 				temp = _queue.get(i);
 				j = i;
 				while( (j>0) && (_queue.get(j-1).getPriority() > temp.getPriority()) )	{
-					_queue.remove(j);
-					_queue.add(j, _queue.get(j-1));
-					j -= 1;
-				}
-				_queue.remove(j);
-				_queue.add(j, temp);
-			}
-		}
-		else if( _algorithm == Algorithm.Deadline )	{
-			Job temp = new Job();
-			for(i=1; i<_queue.size(); i++)	{
-				temp = _queue.get(i);
-				j = i;
-				while( (j>0) && (_queue.get(j-1).getDeadline() > temp.getDeadline()) )	{
 					_queue.remove(j);
 					_queue.add(j, _queue.get(j-1));
 					j -= 1;
