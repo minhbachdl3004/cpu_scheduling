@@ -10,23 +10,21 @@ public class Job	{
 	private double _deadline;
 
 	public Job(int _job_number, double _arrival, double _burst,
-			double _priority, double _deadline)	{
+			double _priority)	{
 		this._job_number = _job_number;
 		this._arrival = _arrival;
 		this._burst = _burst;
 		this._finish = 0.0;
 		this._priority = _priority;
-		this._deadline = _deadline;
 	}
 	
 	public Job(int _job_number, double _arrival, double _burst,
-			double _finish, double _priority, double _deadline)	{
+			double _finish, double _priority)	{
 		this._job_number = _job_number;
 		this._arrival = _arrival;
 		this._burst = _burst;
 		this._finish = _finish;
 		this._priority = _priority;
-		this._deadline = _deadline;
 	}
 	
 	public Job()	{
@@ -47,9 +45,6 @@ public class Job	{
 	public void setPriority(double d)	{
 		_priority = d;
 	}
-	public void setDeadline(double d)	{
-		_deadline = d;
-	}
 	
 	//get
 	public int getJobNumber()	{
@@ -66,8 +61,5 @@ public class Job	{
 	}
 	public double getPriority()	{
 		return _priority;
-	}
-	public double getDeadline()	{
-		return _deadline;
 	}
 }

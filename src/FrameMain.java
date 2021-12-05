@@ -2,12 +2,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class FrameMain 
 	extends JFrame
@@ -38,16 +40,16 @@ public class FrameMain
 	Checkbox _cb_FCFS;
 	Checkbox _cb_SJF;
 	Checkbox _cb_PRIO;
-	Checkbox _cb_DEADLINE;
 	Checkbox _cb_PPRIO;
-	Checkbox _cb_SRTF;
 	Checkbox _cb_RR;
-	
-	JButton _btn_add;
-	JButton _btn_save;
-	JButton _btn_delete;
 
 	JButton _btn_run;
+	JButton _btn_open;
+
+
+	JPanel gui = new JPanel(new BorderLayout());
+	JFileChooser fileChooser;
+	private JTextArea output = new JTextArea(10, 40);
 
 	public FrameMain()	{
 		_jobs = new ArrayList<Job>();
@@ -108,30 +110,15 @@ public class FrameMain
 		_cb_RR = new Checkbox("Round Robin (RR)", false, _cbg_algo);
 		_cb_RR.setBounds(325, 230, 200, 20);
 		_cb_RR.addItemListener(this);
-		
-		_btn_add = new JButton("Add");
-		_btn_add.setBounds(50, 220, 60, 24);
-		_btn_add.addActionListener(this);
-		
-		_btn_save = new JButton("Save");
-		_btn_save.setBounds(130, 220, 65, 24);
-		_btn_save.addActionListener(this);
-		
-		_btn_delete = new JButton("Delete");
-		_btn_delete.setBounds(210, 220, 70, 24);
-		_btn_delete.addActionListener(this);
+
 
 		_btn_run = new JButton("Run");
-		_btn_run.setBounds(140, 270, 60, 24);
+		_btn_run.setBounds(150, 220, 60, 30);
 		_btn_run.addActionListener(this);
 
-//		_txt_result_tt = new TextArea("", 540, 120, TextArea.SCROLLBARS_VERTICAL_ONLY);
-//		_txt_result_tt.setBounds(20, 320, 260, 120);
-//		_txt_result_tt.setEditable(false);
-//
-//		_txt_result_wt = new TextArea("", 540, 120, TextArea.SCROLLBARS_VERTICAL_ONLY);
-//		_txt_result_wt.setBounds(300, 320, 260, 120);
-//		_txt_result_wt.setEditable(false);
+		_btn_open = new JButton("Open File");
+		_btn_open.setBounds(20, 220, 100, 30);
+		_btn_open.addActionListener(this);
 
 		this.setLayout(null);
 		
@@ -154,12 +141,9 @@ public class FrameMain
 		this.add(_cb_PRIO);
 		this.add(_cb_PPRIO);
 		this.add(_cb_RR);
-		
-		this.add(_btn_add);
-		this.add(_btn_save);
-		this.add(_btn_delete);
 
 		this.add(_btn_run);
+		this.add(_btn_open);
 
 		
 		this.setSize(600, 500);
@@ -216,26 +200,45 @@ public class FrameMain
 	
 	public void actionPerformed(ActionEvent e)	{
 		try {
-			File file = new File(new File("src/input.txt").getAbsolutePath());
-			Scanner sc = new Scanner(file);
 			int index = 0;
-			while (sc.hasNextLine()) {
-				if (e.getSource() == _btn_add) {
+			String inputFile = "";
+			if (e.getSource() == _btn_open) {
+				gui.setBorder(new EmptyBorder(2, 3, 2, 3));
+
+				String userDirLocation = System.getProperty("user.dir");
+				File userDir = new File(userDirLocation);
+				// default to user directory
+				fileChooser = new JFileChooser(userDir);
+
+				File f = null;
+				int result = fileChooser.showOpenDialog(gui);
+				if (result == JFileChooser.APPROVE_OPTION) {
+					try {
+						f = fileChooser.getSelectedFile();
+						FileReader fr = new FileReader(f);
+						System.out.println("hello is :" + f);
+						output.read(fr, f);
+						fr.close();
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+				}
+				File file = new File(String.valueOf(f));
+				Scanner sc = new Scanner(file);
+
+				while (sc.hasNextLine()) {
 					_jobs.add(
 							new Job(_jobs.size() + 1, 0, 0,
 									0, Double.POSITIVE_INFINITY)
 					);
 					refreshList();
 					_combo_jobs.setSelectedIndex(_jobs.size() - 1);
-					_btn_add.setEnabled(false);
-				}
-				String input = sc.nextLine();
-				StringTokenizer st = new StringTokenizer(input, ";");
-				String arrival = st.nextToken();
-				String burst = st.nextToken();
-				String priority = st.nextToken();
-				if (_jobs.isEmpty()) return;
-				if (e.getSource() == _btn_save) {
+					String input = sc.nextLine();
+					StringTokenizer st = new StringTokenizer(input, ";");
+					String arrival = st.nextToken();
+					String burst = st.nextToken();
+					String priority = st.nextToken();
+					if (_jobs.isEmpty()) return;
 					try {
 						_jobs.get(index).setArrivalTime(Double.parseDouble(arrival));
 					} catch (Exception ex) {
@@ -248,7 +251,6 @@ public class FrameMain
 						_jobs.get(index).setPriority(Double.parseDouble(priority));
 					} catch (Exception ex) {
 					}
-					refreshDetails();
 					index++;
 					JOptionPane.showMessageDialog(null, "Job # " + (index) + " Saved",
 							"Save", JOptionPane.INFORMATION_MESSAGE);
@@ -256,15 +258,6 @@ public class FrameMain
 			}
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
-		}
-
-		if(e.getSource() == _btn_delete)	{
-			if(_jobs.isEmpty())	return;
-			int index = _combo_jobs.getSelectedIndex();
-			_jobs.remove(index);
-			refreshList();
-			JOptionPane.showMessageDialog(null, "Job " + (index+1) +" Deleted", 
-					"Delete", JOptionPane.INFORMATION_MESSAGE);
 		}
 		if(e.getSource() == _btn_run)	{
 			if(_jobs.isEmpty())	{

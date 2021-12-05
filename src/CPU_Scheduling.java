@@ -7,17 +7,9 @@ public class CPU_Scheduling {
 	List<Job> _jobs; 
 	Algorithm _algorithm;
 	
-	static List<Job> _joblist;
+	List<Job> _joblist;
 	PriorityQueue _queue;
 	GanttChart _gantt_chart;
-	
-	List<Double> _TT;
-	List<Double> _WT;
-	double _TTAve;
-	double _WTAve;
-	
-	String _result_tt;
-	String _result_wt;
 	
 	public CPU_Scheduling(List<Job> _joblist, Algorithm _algorithm)	{
 		this._jobs = copyList(_joblist);
@@ -58,7 +50,6 @@ public class CPU_Scheduling {
 			}	
 			RR(q);
 		}
-		//computeTTWT();
 		return true;
 	}
 	
@@ -111,7 +102,7 @@ public class CPU_Scheduling {
 						break;
 					}
 				}
-				if( ( (time+tempJob.getBurstTime()) > nextJob.getArrivalTime() ) 
+				if( ( (time+tempJob.getBurstTime()) > nextJob.getArrivalTime() )
 						&& time < _joblist.get(_joblist.size()-1).getArrivalTime())	{
 					temp = nextJob.getArrivalTime() - time;
 					time = nextJob.getArrivalTime();
@@ -253,7 +244,7 @@ public class CPU_Scheduling {
 			temp.add(
 					new Job(j.getJobNumber(), j.getArrivalTime(),
 							j.getBurstTime(), j.getJobFinish(),
-							j.getPriority(), j.getDeadline())
+							j.getPriority())
 				);
 		}
 		return temp;
