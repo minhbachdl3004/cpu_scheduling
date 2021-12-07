@@ -10,14 +10,29 @@ public class CPU_Scheduling {
 	List<Job> _joblist;
 	PriorityQueue _queue;
 	GanttChart _gantt_chart;
+	Double quantum;
+	Scanner scanner = new Scanner(System.in);
 	
-	public CPU_Scheduling(List<Job> _joblist, Algorithm _algorithm)	{
+	public CPU_Scheduling(List<Job> _joblist, Algorithm _algorithm, Double quantum)	{
 		this._jobs = copyList(_joblist);
 		this._algorithm = _algorithm;
 		
 		this._joblist = copyList(_joblist);
 		this._queue = new PriorityQueue(_algorithm);
 		this._gantt_chart = new GanttChart();
+
+		this.quantum = quantum;
+
+	}
+
+	public CPU_Scheduling(List<Job> _joblist, Algorithm _algorithm)	{
+		this._jobs = copyList(_joblist);
+		this._algorithm = _algorithm;
+
+		this._joblist = copyList(_joblist);
+		this._queue = new PriorityQueue(_algorithm);
+		this._gantt_chart = new GanttChart();
+
 
 	}
 	
@@ -39,13 +54,10 @@ public class CPU_Scheduling {
 		else if(_algorithm == Algorithm.RR)	{
 			double q = 0.0;
 			try	{
-				String input = JOptionPane.showInputDialog(null, "Quantum: ", 
-					"Quantum", JOptionPane.QUESTION_MESSAGE);
-				q = Double.parseDouble(input);
+				q = quantum;
 			}
-			catch(Exception exc)	{
-				JOptionPane.showMessageDialog(null, "Invalid input! \n Quantum must be a double!", 
-						"Input Error", JOptionPane.ERROR_MESSAGE);
+			catch(Exception exc) {
+				System.out.println(exc);
 				return false;
 			}	
 			RR(q);
