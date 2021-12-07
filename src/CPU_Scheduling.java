@@ -3,20 +3,20 @@ import java.util.*;
 import javax.swing.*;
 
 public class CPU_Scheduling {
-	
-	List<Job> _jobs; 
+
+	List<Job> _jobs;
 	Algorithm _algorithm;
-	
+
 	List<Job> _joblist;
 	PriorityQueue _queue;
 	GanttChart _gantt_chart;
 	Double quantum;
 	Scanner scanner = new Scanner(System.in);
-	
+
 	public CPU_Scheduling(List<Job> _joblist, Algorithm _algorithm, Double quantum)	{
 		this._jobs = copyList(_joblist);
 		this._algorithm = _algorithm;
-		
+
 		this._joblist = copyList(_joblist);
 		this._queue = new PriorityQueue(_algorithm);
 		this._gantt_chart = new GanttChart();
@@ -35,12 +35,12 @@ public class CPU_Scheduling {
 
 
 	}
-	
+
 	GanttChart getGanttChart()	{
 		return _gantt_chart;
 	}
 
-	
+
 	boolean solve()	{
 		sortArrival();
 		if( _algorithm == Algorithm.FCFS ||
@@ -59,19 +59,19 @@ public class CPU_Scheduling {
 			catch(Exception exc) {
 				System.out.println(exc);
 				return false;
-			}	
+			}
 			RR(q);
 		}
 		return true;
 	}
-	
+
 	void nonPreemptiveAlgo()	{
 		Job tempJob = new Job();
 		double time = 0.0;
 		double idle = 0.0;
 		while( !_joblist.isEmpty() )	{
-			for(int i = 0; i < _joblist.size(); i++)	{		
-				if( _joblist.get(i).getArrivalTime() <= time ) 	
+			for(int i = 0; i < _joblist.size(); i++)	{
+				if( _joblist.get(i).getArrivalTime() <= time )
 					_queue.enqueue(_joblist.get(i));
 				else	break;
 			}
@@ -81,19 +81,19 @@ public class CPU_Scheduling {
 				_gantt_chart.addTimeList(time);
 				tempJob.setJobFinish(time);
 				_jobs.get( tempJob.getJobNumber()-1 ).setJobFinish(time);
-				_gantt_chart.addJobList("JOB "+tempJob.getJobNumber() + "\n   ("+tempJob.getBurstTime() +")" );
+				_gantt_chart.addJobList("PROCESS "+tempJob.getJobNumber() + "("+tempJob.getBurstTime() +")");
 				delete(tempJob);
 			}
 			else	{
 				tempJob = dequeue();
 				idle = tempJob.getArrivalTime()-time;
-				_gantt_chart.addJobList("IDLE" + "\n   (" + idle +")");
+				_gantt_chart.addJobList("IDLE" + "(" + idle +")");
 				_gantt_chart.addTimeList(time += idle);
 				enqueue(tempJob);
 			}
 		}
 	}
-	
+
 	void preemptiveAlgo()	{
 		Job tempJob = new Job();
 		Job nextJob = new Job();
@@ -101,8 +101,8 @@ public class CPU_Scheduling {
 		double idle = 0.0;
 		double temp = 0.0;
 		while( _joblist.isEmpty() != true )	{
-			for(int i = 0; i < _joblist.size(); i++)	{		
-				if( _joblist.get(i).getArrivalTime() <= time ) 		
+			for(int i = 0; i < _joblist.size(); i++)	{
+				if( _joblist.get(i).getArrivalTime() <= time )
 					_queue.enqueue(_joblist.get(i));
 				else	break;
 			}
@@ -119,7 +119,7 @@ public class CPU_Scheduling {
 					temp = nextJob.getArrivalTime() - time;
 					time = nextJob.getArrivalTime();
 					tempJob.setBurstTime( tempJob.getBurstTime()-temp );
-					_gantt_chart.addJobList("JOB "+tempJob.getJobNumber() + "\n   ("+temp +")");
+					_gantt_chart.addJobList("PROCESS "+tempJob.getJobNumber() + "("+temp +")");
 					_gantt_chart.addTimeList(time);
 				}
 				else	{
@@ -127,7 +127,7 @@ public class CPU_Scheduling {
 					_gantt_chart.addTimeList(time);
 					tempJob.setJobFinish(time);
 					_jobs.get( tempJob.getJobNumber()-1 ).setJobFinish(time);
-					_gantt_chart.addJobList("JOB "+tempJob.getJobNumber() + "\n   ("+tempJob.getBurstTime()+")");
+					_gantt_chart.addJobList("PROCESS "+tempJob.getJobNumber() + "("+tempJob.getBurstTime()+")");
 					delete(tempJob);
 				}
 			}
@@ -140,7 +140,7 @@ public class CPU_Scheduling {
 			}
 		}
 	}
-	
+
 	void RR(double quantum)	{
 		Job tempJob = new Job();
 		double time = 0.0;
@@ -152,7 +152,7 @@ public class CPU_Scheduling {
 					if(tempJob.getBurstTime() > quantum)	{
 						time += quantum;
 						_gantt_chart.addTimeList(time);
-						_gantt_chart.addJobList("JOB "+tempJob.getJobNumber() + "\n   ("+ quantum +")" );
+						_gantt_chart.addJobList("PROCESS "+tempJob.getJobNumber() + "("+ quantum +")" );
 						tempJob.setBurstTime( tempJob.getBurstTime()- quantum );
 						tempJob.setArrivalTime(time);
 						enqueue(tempJob);
@@ -160,7 +160,7 @@ public class CPU_Scheduling {
 					else	{
 						time += tempJob.getBurstTime();
 						_gantt_chart.addTimeList(time);
-						_gantt_chart.addJobList("JOB "+tempJob.getJobNumber() + "\n   ("+ tempJob.getBurstTime() +")" );
+						_gantt_chart.addJobList("PROCESS "+tempJob.getJobNumber() + "("+ tempJob.getBurstTime() +")" );
 						tempJob.setBurstTime(0.0);
 						tempJob.setJobFinish(time);
 						_jobs.get( tempJob.getJobNumber()-1 ).setJobFinish(time);
@@ -170,13 +170,13 @@ public class CPU_Scheduling {
 			else	{
 				tempJob = dequeue();
 				idle = tempJob.getArrivalTime()-time;
-				_gantt_chart.addJobList("IDLE" + "\n   (" + idle +")");
+				_gantt_chart.addJobList("IDLE" + "(" + idle +")");
 				_gantt_chart.addTimeList(time += idle);
 				enqueue(tempJob);
 			}
 		}
 	}
-	
+
 //	void computeTTWT()	{
 //		String r = new String();
 //
@@ -209,12 +209,12 @@ public class CPU_Scheduling {
 //
 //		_result_wt = r;
 //	}
-	
+
 	void enqueue(Job job)	{
 		_joblist.add(job);
 		sortArrival();
 	}
-	
+
 	Job dequeue()	{
 		Job temp = new Job();
 		temp = _joblist.get(0);
@@ -223,19 +223,19 @@ public class CPU_Scheduling {
 	}
 
 	void delete(Job job)	{
-		for(int i = 0; i < _joblist.size(); i++)	
+		for(int i = 0; i < _joblist.size(); i++)
 			if( job == _joblist.get(i) )	{
 				_joblist.remove(i);
 				break;
 			}
 	}
-	
+
 	boolean isEmpty()	{
-		return _joblist.isEmpty(); 
+		return _joblist.isEmpty();
 	}
-	
+
 	void sortArrival()	{
-		int i =0 , j = 0; 
+		int i =0 , j = 0;
 		Job temp = new Job();
 		for(i = 1; i < _joblist.size(); i++)	{
 			temp = _joblist.get(i);
@@ -249,7 +249,7 @@ public class CPU_Scheduling {
 			_joblist.add(j, temp);
 		}
 	}
-	
+
 	ArrayList<Job> copyList(List<Job> _jobs)	{
 		ArrayList<Job> temp = new ArrayList<Job>();
 		for(Job j : _jobs)	{

@@ -18,11 +18,12 @@ public class Server {
     BufferedReader in = null;
 
     String drawGanttChart(GanttChart _gantt_chart) {
+        String tempGantt = "";
         System.out.print("0.0");
         String result = "0.0";
-        for(int i = 0; i < _gantt_chart.getJobList().size(); i++)	{
-            System.out.print(" -----Process" + (i+1)  + "----- " + _gantt_chart.getTimeList().get(i));
-            String tempGantt = " -----Process" + (i+1) + "----- " + _gantt_chart.getTimeList().get(i);
+        for(int i = 0; i < _gantt_chart.getJobList().size(); i++) {
+            System.out.print(" -----> " + _gantt_chart.getJobList().get(i) + " <----- " + _gantt_chart.getTimeList().get(i));
+            tempGantt = " -----> " + _gantt_chart.getJobList().get(i) + " <----- " + _gantt_chart.getTimeList().get(i);
             result += tempGantt;
         }
         System.out.println("\n\n");
@@ -32,6 +33,7 @@ public class Server {
     }
 
     public void actionPerformed() {
+        _jobs.removeAll(_jobs);
         try {
             int index = 0;
 
@@ -130,7 +132,6 @@ public class Server {
             out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line = "";
-            String result = "";
             String _quantum = "";
 
             while (!line.equals("bye")) {
@@ -150,6 +151,7 @@ public class Server {
                         quantum = Double.parseDouble(_quantum);
                         CPU_Scheduling _solver_RR = new CPU_Scheduling(_jobs, _algorithm, quantum);
                         if (_solver_RR.solve()) {
+                            String result = "";
                             drawGanttChart(_solver_RR.getGanttChart());
                             result = drawGanttChart(_solver_RR.getGanttChart());
                             out.write(result);
@@ -160,6 +162,7 @@ public class Server {
                     else {
                         CPU_Scheduling _solver = new CPU_Scheduling(_jobs, _algorithm);
                         if (_solver.solve()) {
+                            String result = "";
                             drawGanttChart(_solver.getGanttChart());
                             result = drawGanttChart(_solver.getGanttChart());
                             out.write(result);
