@@ -14,8 +14,8 @@ public class Server {
 
     private Socket socket = null;
     private ServerSocket server = null;
-    BufferedWriter out = null;
-    BufferedReader in = null;
+    DataOutputStream out = null;
+    DataInputStream in = null;
 
     String drawGanttChart(GanttChart _gantt_chart) {
         String tempGantt = "";
@@ -27,7 +27,6 @@ public class Server {
             result += tempGantt;
         }
         System.out.println("\n\n");
-        System.out.println(result);
         System.out.println("\n\n");
         return result;
     }
@@ -93,25 +92,25 @@ public class Server {
             _jobs.get(i - 1).setJobNumber(i);
     }
 
-    public void itemStateChanged(int state)	{
+    public void itemStateChanged(String state)	{
         switch(state) {
-            case 1:
+            case "FCFS":
                 // code block
                 _algorithm = Algorithm.FCFS;
                 break;
-            case 2:
+            case "SJF":
                 // code block
                 _algorithm = Algorithm.SJF;
                 break;
-            case 3:
+            case "Prio":
                 // code block
                 _algorithm = Algorithm.Prio;
                 break;
-            case 4:
+            case "PPrio":
                 // code block
                 _algorithm = Algorithm.PPrio;
                 break;
-            case 5:
+            case "RR":
                 // code block
                 _algorithm = Algorithm.RR;
                 break;
@@ -129,50 +128,52 @@ public class Server {
             System.out.println("Waiting for a client ...");
             socket = server.accept();
             System.out.println("Server accepted");
-            out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new DataOutputStream(socket.getOutputStream());
+            in = new DataInputStream(socket.getInputStream());
             String line = "";
             String _quantum = "";
 
             while (!line.equals("bye")) {
-                try {
-                    line = in.readLine();
-                    System.out.println("Server received: " + line);
-                    int algorithm = Integer.parseInt(line);
-                    itemStateChanged(algorithm);
-                    actionPerformed();
-                    System.out.println("==================================");
-                    if (algorithm == 5) {
-                        out.write("quantum time: ");
-                        out.newLine();
-                        out.flush();
+                if (line.equals("bye")) return;
+                else {
+                    try {
+                        line = in.readUTF();
+                        System.out.println("Server received: " + line);
+                        itemStateChanged(line);
+                        actionPerformed();
+                        System.out.println("==================================");
+                        if (line.equals("RR")) {
+                            out.writeUTF("quantum time: ");
+                            out.flush();
 
-                        _quantum = in.readLine();
-                        quantum = Double.parseDouble(_quantum);
-                        CPU_Scheduling _solver_RR = new CPU_Scheduling(_jobs, _algorithm, quantum);
-                        if (_solver_RR.solve()) {
-                            String result = "";
-                            drawGanttChart(_solver_RR.getGanttChart());
-                            result = drawGanttChart(_solver_RR.getGanttChart());
-                            out.write(result);
-                            out.newLine();
+                            _quantum = in.readUTF();
+                            quantum = Double.parseDouble(_quantum);
+                            CPU_Scheduling _solver_RR = new CPU_Scheduling(_jobs, _algorithm, quantum);
+                            if (_solver_RR.solve()) {
+                                String result = "";
+                                drawGanttChart(_solver_RR.getGanttChart());
+                                result = drawGanttChart(_solver_RR.getGanttChart());
+                                out.writeUTF(result);
+                                out.flush();
+                            }
+                        }
+                        if (line.equals("FCFS") || line.equals("SJF") || line.equals("Prio") || line.equals("PPrio")){
+                            CPU_Scheduling _solver = new CPU_Scheduling(_jobs, _algorithm);
+                            if (_solver.solve()) {
+                                String result = "";
+                                drawGanttChart(_solver.getGanttChart());
+                                result = drawGanttChart(_solver.getGanttChart());
+                                out.writeUTF(result);
+                                out.flush();
+                            }
+                        }
+                        else {
+                            out.writeUTF("Dữ liệu truyền vào không dúng:");
                             out.flush();
                         }
+                    } catch (IOException i) {
+                        System.out.println(i);
                     }
-                    else {
-                        CPU_Scheduling _solver = new CPU_Scheduling(_jobs, _algorithm);
-                        if (_solver.solve()) {
-                            String result = "";
-                            drawGanttChart(_solver.getGanttChart());
-                            result = drawGanttChart(_solver.getGanttChart());
-                            out.write(result);
-                            out.newLine();
-                            out.flush();
-                        }
-                    }
-                }
-                catch (IOException i) {
-                    System.out.println(i);
                 }
             }
         }

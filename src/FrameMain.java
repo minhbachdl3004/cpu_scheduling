@@ -27,14 +27,14 @@ public class FrameMain
 	JLabel _lbl_jobno;
 	JComboBox<String> _combo_jobs;
 
-	JLabel _lbl_arrival;
-	JLabel _txt_arrival;
-
-	JLabel _lbl_burst;
-	JLabel _txt_burst;
-
-	JLabel _lbl_priority;
-	JLabel _txt_priority;
+//	JLabel _lbl_arrival;
+//	JLabel _txt_arrival;
+//
+//	JLabel _lbl_burst;
+//	JLabel _txt_burst;
+//
+//	JLabel _lbl_priority;
+//	JLabel _txt_priority;
 
 	CheckboxGroup _cbg_algo;
 	Checkbox _cb_FCFS;
