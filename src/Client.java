@@ -147,18 +147,30 @@ public class Client extends JFrame
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == _btn_open) {
-            String userDirLocation = System.getProperty("user.dir");
-            File userDir = new File(userDirLocation);
-            // default to user directory
-            JFileChooser fileChooser = new JFileChooser(userDir);
-            File f = null;
-            int result = fileChooser.showOpenDialog(null);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                f = fileChooser.getSelectedFile().getAbsoluteFile();
-                String fileName = f.getName();
-                System.out.println("file chooser: " + fileName);
-                nameFile.setText(fileName);
+            try {
+                String userDirLocation = System.getProperty("user.dir");
+                File userDir = new File(userDirLocation);
+                // default to user directory
+                JFileChooser fileChooser = new JFileChooser(userDir);
+                File f = null;
+                String tmp = "";
+                int result = fileChooser.showOpenDialog(null);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    f = fileChooser.getSelectedFile().getAbsoluteFile();
+                    String fileName = f.getName();
+                    tmp = f.toString();
+                    System.out.println("file chooser: " + fileName);
+                    nameFile.setText(fileName);
+                }
+                String msgout = "";
+                msgout = tmp;
+                out.writeUTF(msgout);
+                out.flush();
             }
+            catch (Exception i) {
+                i.printStackTrace();
+            }
+
         }
         if (e.getSource() == _btn_submit) {
             try {
