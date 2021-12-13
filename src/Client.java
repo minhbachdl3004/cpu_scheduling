@@ -6,6 +6,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.net.*;
 import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 
 
 public class Client extends JFrame
@@ -16,17 +18,17 @@ public class Client extends JFrame
     Font _font_job;
 
     JLabel _lbl_algorithm;
+    JLabel _lbl_fileName;
     JTextField msg_text;
+    JTextField nameFile;
 
-    CheckboxGroup _cbg_algo;
-
-    JButton _btn_run;
     JButton _btn_open;
     JButton _btn_submit;
 
     Socket socket = null;
     DataInputStream in;
     DataOutputStream out;
+
 
     void initUI()	{
 
@@ -41,6 +43,11 @@ public class Client extends JFrame
 
         msg_text = new JTextField("");
         msg_text.setBounds(110, 135, 100, 20);
+
+        nameFile = new JTextField("");
+        nameFile.setBounds(130, 200, 100, 40);
+        nameFile.setFont(new Font("Times New Roman", Font.BOLD, 20));
+        nameFile.setEditable(false);
 
         _btn_submit = new JButton("Submit");
         _btn_submit.setBounds(230, 130, 100, 30);
@@ -63,10 +70,6 @@ public class Client extends JFrame
 //		_txt_priority.setBounds(250, 160, 50, 20);
 
 
-        _btn_run = new JButton("Run");
-        _btn_run.setBounds(150, 200, 60, 40);
-        _btn_run.addActionListener(this);
-
         _btn_open = new JButton("Open File");
         _btn_open.setBounds(20, 200, 100, 40);
         _btn_open.addActionListener(this);
@@ -86,9 +89,10 @@ public class Client extends JFrame
 //		this.add(_txt_priority);
 
         this.add(_lbl_algorithm);
-        this.add(msg_text);
 
-        this.add(_btn_run);
+        this.add(msg_text);
+        this.add(nameFile);
+
         this.add(_btn_open);
         this.add(_btn_submit);
 
@@ -142,6 +146,20 @@ public class Client extends JFrame
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == _btn_open) {
+            String userDirLocation = System.getProperty("user.dir");
+            File userDir = new File(userDirLocation);
+            // default to user directory
+            JFileChooser fileChooser = new JFileChooser(userDir);
+            File f = null;
+            int result = fileChooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                f = fileChooser.getSelectedFile().getAbsoluteFile();
+                String fileName = f.getName();
+                System.out.println("file chooser: " + fileName);
+                nameFile.setText(fileName);
+            }
+        }
         if (e.getSource() == _btn_submit) {
             try {
                 _panel_gantt.removeAll();
@@ -154,15 +172,28 @@ public class Client extends JFrame
                 out.writeUTF(msgout);
                 out.flush();
                 if (msgouttmp.equals("RR")) {
-                    try {
-                        String temp = JOptionPane.showInputDialog("Quantum time: ");
-                        Double quantum = Double.parseDouble(temp);
-                        out.writeUTF(String.valueOf(quantum));
-                        out.flush();
-                    }
-                    catch (NumberFormatException nfe) {
-                        JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
-                                ,"Alert",JOptionPane.WARNING_MESSAGE);
+                    while (true) {
+                        try {
+                            String temp = JOptionPane.showInputDialog("Quantum time: ");
+                            if (temp.matches("-?\\d+(\\.\\d+)?")) {
+                                if (Double.parseDouble(temp) > 0) {
+                                    out.writeUTF(temp);
+                                    out.flush();
+                                    break;
+                                }
+                                else {
+                                    JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
+                                            , "Alert", JOptionPane.WARNING_MESSAGE);
+                                }
+                            }
+                            else {
+                                JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
+                                        , "Alert", JOptionPane.WARNING_MESSAGE);
+                            }
+                        } catch (NumberFormatException nfe) {
+                            JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
+                                    , "Alert", JOptionPane.WARNING_MESSAGE);
+                        }
                     }
                 }
                 if (!msgouttmp.equals("FCFS") && !msgouttmp.equals("SJF") && !msgouttmp.equals("Prio")

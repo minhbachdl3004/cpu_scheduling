@@ -21,10 +21,12 @@ public class Server {
         String tempGantt = "";
         System.out.print("0.0");
         String result = "0.0";
+        String tmpGantt = "";
         for(int i = 0; i < _gantt_chart.getJobList().size(); i++) {
             System.out.print(" -----> " + _gantt_chart.getJobList().get(i) + " <----- " + _gantt_chart.getTimeList().get(i));
             tempGantt = " -----> " + _gantt_chart.getJobList().get(i) + " <----- " + _gantt_chart.getTimeList().get(i);
-            result += tempGantt;
+            tmpGantt += _gantt_chart.getJobList().get(i) + "," + _gantt_chart.getTimeList().get(i) + ";";
+            result += tmpGantt;
         }
         System.out.println("\n\n");
         System.out.println("\n\n");
@@ -36,24 +38,6 @@ public class Server {
         try {
             int index = 0;
 
-//                String userDirLocation = System.getProperty("user.dir");
-//                File userDir = new File(userDirLocation);
-//                // default to user directory
-//                fileChooser = new JFileChooser(userDir);
-//
-//                File f = null;
-//                int result = fileChooser.showOpenDialog(gui);
-//                if (result == JFileChooser.APPROVE_OPTION) {
-//                    try {
-//                        f = fileChooser.getSelectedFile();
-//                        FileReader fr = new FileReader(f);
-//                        System.out.println("hello is :" + f);
-//                        output.read(fr, f);
-//                        fr.close();
-//                    } catch (Exception ex) {
-//                        ex.printStackTrace();
-//                    }
-//                }
             File file = new File(new File("src/input.txt").getAbsolutePath());
             Scanner sc = new Scanner(file);
 
@@ -69,16 +53,20 @@ public class Server {
                 String priority = st.nextToken();
                 if (_jobs.isEmpty()) return;
                 try {
-                    _jobs.get(index).setArrivalTime(Double.parseDouble(arrival));
-                } catch (Exception ex) {
+                        _jobs.get(index).setArrivalTime(Double.parseDouble(arrival));
+                }
+                catch (Exception ex) {
                 }
                 try {
-                    _jobs.get(index).setBurstTime(Double.parseDouble(burst));
-                } catch (Exception ex) {
+                        _jobs.get(index).setArrivalTime(Double.parseDouble(arrival));
+
+                }
+                catch (Exception ex) {
                 }
                 try {
-                    _jobs.get(index).setPriority(Double.parseDouble(priority));
-                } catch (Exception ex) {
+                        _jobs.get(index).setArrivalTime(Double.parseDouble(priority));
+                }
+                catch (Exception ex) {
                 }
                 index++;
             }

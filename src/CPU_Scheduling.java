@@ -44,8 +44,8 @@ public class CPU_Scheduling {
 	boolean solve()	{
 		sortArrival();
 		if( _algorithm == Algorithm.FCFS ||
-			_algorithm == Algorithm.SJF ||
-			_algorithm == Algorithm.Prio )	{
+				_algorithm == Algorithm.SJF ||
+				_algorithm == Algorithm.Prio )	{
 			nonPreemptiveAlgo();
 		}
 		else if( _algorithm == Algorithm.PPrio)	{
@@ -71,9 +71,9 @@ public class CPU_Scheduling {
 		double idle = 0.0;
 		while( !_joblist.isEmpty() )	{
 			for(int i = 0; i < _joblist.size(); i++)	{
-				if( _joblist.get(i).getArrivalTime() <= time )
+				if( _joblist.get(i).getArrivalTime() <= time)
 					_queue.enqueue(_joblist.get(i));
-				else	break;
+				else break;
 			}
 			if( !_queue.isEmpty() )	{
 				tempJob = _queue.dequeue();
@@ -257,7 +257,7 @@ public class CPU_Scheduling {
 					new Job(j.getJobNumber(), j.getArrivalTime(),
 							j.getBurstTime(), j.getJobFinish(),
 							j.getPriority())
-				);
+			);
 		}
 		return temp;
 	}
