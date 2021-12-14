@@ -1,13 +1,19 @@
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.net.*;
 import java.io.*;
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 
 public class Client extends JFrame
@@ -26,9 +32,97 @@ public class Client extends JFrame
     JButton _btn_submit;
 
     Socket socket = null;
-    DataInputStream in;
-    DataOutputStream out;
+    BufferedWriter out = null;
+    BufferedReader in = null;
 
+    String SECRET_KEY = "stackjava.com.if";
+
+    String PUBLIC_KEY;
+
+    String encryptDataByAES (String data, Key seckey) {
+        String result = "";
+        try {
+            //Mã hóa dữ liệu bằng AES
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
+            cipher.init(Cipher.ENCRYPT_MODE, seckey);
+            byte[] byteEncrypted = cipher.doFinal(data.getBytes());
+            String encryptedData = Base64.getEncoder().encodeToString(byteEncrypted);
+            System.out.println("Dữ liệu sau khi được mã hóa: " + encryptedData);
+            result = encryptedData;
+        }
+        catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    String encryptDataByRSA (String data, Key pubKey) {
+        String result = "";
+        try {
+            Cipher c = Cipher.getInstance("RSA");
+            c.init(Cipher.ENCRYPT_MODE, pubKey);
+            byte encryptOutData[] = c.doFinal(data.getBytes());
+            String encryptedData = Base64.getEncoder().encodeToString(encryptOutData);
+            System.out.println("Chuỗi sau khi mã hoá lần 2: " + "\n" + encryptedData);
+            result = encryptedData;
+        }
+        catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    String decryptDataByAES (String data, Key secKey) {
+        String result = "";
+        try {
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, secKey);
+            byte[] byteDecrypted = cipher.doFinal(Base64.getDecoder().decode(data));
+            String decryptedData = new String(byteDecrypted);
+            System.out.println("Dữ liệu sau khi giải mã là: " + decryptedData);
+            result = decryptedData;
+        }
+        catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 
     void initUI()	{
 
@@ -104,39 +198,117 @@ public class Client extends JFrame
         this.setVisible(true);
     }
 
-    public Client (String address, int port) throws UnknownHostException, IOException {
-        initUI();
-        socket = new Socket(address, port);
-        System.out.println("Connected");
-        in = new DataInputStream(socket.getInputStream());
-        out = new DataOutputStream(socket.getOutputStream());
-
-        String line = "";
-
-        while (!line.equals("bye")) {
-            JTextArea gantt = new JTextArea(5, 20);
-            _scrollpane = new JScrollPane(gantt);
-            gantt.setEditable(false);
-            gantt.setFont(_font_job);
-            gantt.setBackground(getBackground());
-            line = in.readUTF();
-            if (line.equals("bye")) return;
-            if (!line.equals("RR")) {
-                gantt.setText(line);
-                _panel_gantt.add(gantt);
-                _panel_gantt.validate();
-            }
-            if (line.equals("RR")) {
-                line = in.readUTF();
-                gantt.setText(line);
-                _panel_gantt.add(gantt);
-                _panel_gantt.validate();
-            }
+    PublicKey publicKey (String publicKey) {
+        try {
+            byte[] decodedBytes = Base64.getDecoder().decode(publicKey);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(decodedBytes);
+            KeyFactory factory = KeyFactory.getInstance("RSA");
+            PublicKey pubKey = factory.generatePublic(spec);
+            return pubKey;
         }
+        catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-        in.close();
-        out.close();
-        socket.close();
+    public Client (String address, int port) throws UnknownHostException {
+        try {
+            initUI();
+            socket = new Socket(address, port);
+            System.out.println("Connected");
+            out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            String line = "";
+            String message = "";
+
+            SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+
+            System.out.println("CLient send: " + message);
+            line = in.readLine();
+            System.out.println("PublicKey: " + line);
+
+            JSONObject jsonObject = new JSONObject(line);
+
+            String publicKey = jsonObject.get("publicKey").toString();
+
+            PUBLIC_KEY = publicKey;
+
+            byte[] decodedBytes = Base64.getDecoder().decode(publicKey);
+
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(decodedBytes);
+            KeyFactory factory = KeyFactory.getInstance("RSA");
+            PublicKey pubKey = factory.generatePublic(spec);
+
+            // Mã hoá dữ liệu bằng RSA
+            Cipher c = Cipher.getInstance("RSA");
+            c.init(Cipher.ENCRYPT_MODE, pubKey);
+            String msg = SECRET_KEY;
+            byte encryptOut[] = c.doFinal(msg.getBytes());
+            String strEncrypt = Base64.getEncoder().encodeToString(encryptOut);
+            System.out.println("Chuỗi sau khi mã hoá: " + "\n" + strEncrypt);
+
+            String encryptSecretKey = strEncrypt;
+            JSONObject jsonObject1 = new JSONObject();
+            jsonObject1.put("secretKey", encryptSecretKey);
+            encryptSecretKey = jsonObject1.toString();
+
+            out.write(encryptSecretKey);
+            out.newLine();
+            out.flush();
+
+            String result = "";
+
+            while (!line.equals("bye")) {
+                JTextArea gantt = new JTextArea(5, 20);
+                _scrollpane = new JScrollPane(gantt);
+                gantt.setEditable(false);
+                gantt.setFont(_font_job);
+                gantt.setBackground(getBackground());
+                line = in.readLine();
+                //Giải mã dữ liệu bằng AES
+                result = decryptDataByAES(line, skeySpec);
+
+                if (result.equals("bye")) return;
+                if (!result.equals("RR")) {
+                    gantt.setText(result);
+                    _panel_gantt.add(gantt);
+                    _panel_gantt.validate();
+
+                    String[] ganttChart = result.split(";");
+                    for (String a : ganttChart) {
+                        System.out.println(a);
+                    }
+                }
+                if (result.equals("RR")) {
+                    result = in.readLine();
+                    gantt.setText(result);
+                    _panel_gantt.add(gantt);
+                    _panel_gantt.validate();
+
+
+                }
+            }
+            in.close();
+            out.close();
+            socket.close();
+        }
+        catch (IOException | JSONException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException i) {
+            System.out.println(i);
+        }
+        catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -146,6 +318,8 @@ public class Client extends JFrame
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        String encryptedMessage = "";
+        String resultMessage = "";
         if (e.getSource() == _btn_open) {
             try {
                 String userDirLocation = System.getProperty("user.dir");
@@ -164,7 +338,8 @@ public class Client extends JFrame
                 }
                 String msgout = "";
                 msgout = tmp;
-                out.writeUTF(msgout);
+                out.write(msgout);
+                out.newLine();
                 out.flush();
             }
             catch (Exception i) {
@@ -181,15 +356,34 @@ public class Client extends JFrame
                 String msgout = "";
                 msgout = msg_text.getText();
                 String msgouttmp = msgout;
-                out.writeUTF(msgout);
+
+                //Mã hóa lấn 1 bởi secretKey AES
+                SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+                encryptedMessage = encryptDataByAES(msgouttmp, skeySpec);
+
+                //Mã hóa lần 2 bởi publicKey RSA
+                PublicKey pubKey = publicKey(PUBLIC_KEY);
+                encryptedMessage = encryptDataByRSA(encryptedMessage, pubKey);
+
+                out.write(encryptedMessage);
+                out.newLine();
                 out.flush();
-                if (msgouttmp.equals("RR")) {
+
+                if (msgout.equals("RR")) {
                     while (true) {
                         try {
                             String temp = JOptionPane.showInputDialog("Quantum time: ");
                             if (temp.matches("-?\\d+(\\.\\d+)?")) {
                                 if (Double.parseDouble(temp) > 0) {
-                                    out.writeUTF(temp);
+                                    //Mã hóa lấn 1 bởi secretKey AES
+                                    skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+                                    encryptedMessage = encryptDataByAES(temp, skeySpec);
+
+                                    //Mã hóa lần 2 bởi publicKey RSA
+                                    pubKey = publicKey(PUBLIC_KEY);
+                                    encryptedMessage = encryptDataByRSA(encryptedMessage, pubKey);
+                                    out.write(encryptedMessage);
+                                    out.newLine();
                                     out.flush();
                                     break;
                                 }
@@ -208,8 +402,8 @@ public class Client extends JFrame
                         }
                     }
                 }
-                if (!msgouttmp.equals("FCFS") && !msgouttmp.equals("SJF") && !msgouttmp.equals("Prio")
-                        && !msgouttmp.equals("PPrio") && !msgouttmp.equals("RR") && !msgouttmp.equals("bye")) {
+                if (!msgout.equals("FCFS") && !msgout.equals("SJF") && !msgout.equals("Prio")
+                        && !msgout.equals("PPrio") && !msgout.equals("RR") && !msgout.equals("bye")) {
                     JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại","Alert",JOptionPane.WARNING_MESSAGE);
                 }
             } catch (IOException e1) {
