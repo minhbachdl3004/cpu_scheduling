@@ -7,6 +7,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.net.*;
 import java.io.*;
 import java.io.File;
@@ -14,22 +16,34 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Scanner;
 
 
 public class Client extends JFrame
-        implements ActionListener {
+        implements ActionListener, ItemListener {
 
     JPanel _panel_gantt;
     JScrollPane _scrollpane;
     Font _font_job;
 
     JLabel _lbl_algorithm;
-    JLabel _lbl_fileName;
+
     JTextField msg_text;
     JTextField nameFile;
 
     JButton _btn_open;
     JButton _btn_submit;
+
+    CheckboxGroup _cbg_algo;
+    Checkbox _cb_FCFS;
+    Checkbox _cb_SJF;
+    Checkbox _cb_PRIO;
+    Checkbox _cb_PPRIO;
+    Checkbox _cb_RR;
+
+    JButton _btn_exit;
+
+    Algorithm _algorithm;
 
     Socket socket = null;
     BufferedWriter out = null;
@@ -136,7 +150,9 @@ public class Client extends JFrame
         _lbl_algorithm.setBounds(20, 130, 100, 30);
 
         msg_text = new JTextField("");
-        msg_text.setBounds(110, 135, 100, 20);
+        msg_text.setBounds(110, 135, 100, 30);
+        msg_text.setFont(new Font("Times New Roman", Font.PLAIN, 20));
+        msg_text.setEditable(false);
 
         nameFile = new JTextField("");
         nameFile.setBounds(130, 200, 100, 40);
@@ -144,43 +160,44 @@ public class Client extends JFrame
         nameFile.setEditable(false);
 
         _btn_submit = new JButton("Submit");
-        _btn_submit.setBounds(230, 130, 100, 30);
+        _btn_submit.setBounds(345, 280, 100, 30);
         _btn_submit.addActionListener(this);
-
-//		_lbl_arrival = new JLabel("Arrival Time: ");
-//		_lbl_arrival.setBounds(20, 160, 100, 20);
-//		_txt_arrival = new JLabel();
-//		_txt_arrival.setBounds(100, 160, 50, 20);
-//
-//		_lbl_burst = new JLabel("Burst Time: ");
-//		_lbl_burst.setBounds(20, 185, 100, 20);
-//		_txt_burst = new JLabel();
-//		_txt_burst.setBounds(100, 185, 50, 20);
-//
-//
-//		_lbl_priority = new JLabel("Priority: ");
-//		_lbl_priority.setBounds(190, 160, 100, 20);
-//		_txt_priority = new JLabel();
-//		_txt_priority.setBounds(250, 160, 50, 20);
-
 
         _btn_open = new JButton("Open File");
         _btn_open.setBounds(20, 200, 100, 40);
         _btn_open.addActionListener(this);
 
+        _btn_exit = new JButton("EXIT");
+        _btn_exit.setBounds(20, 280, 200, 60);
+        _btn_exit.addActionListener(this);
+
+        _cbg_algo = new CheckboxGroup();
+
+        _cb_FCFS = new Checkbox("First Come First Serve (FCFS)", false, _cbg_algo);
+        _cb_FCFS.setBounds(345, 130, 200, 20);
+        _cb_FCFS.addItemListener(this);
+
+        _cb_SJF = new Checkbox("Shortest Job First (SJF)", false, _cbg_algo);
+        _cb_SJF.setBounds(345, 160, 200, 20);
+        _cb_SJF.addItemListener(this);
+
+        _cb_PRIO = new Checkbox("Priority (Prio)", false, _cbg_algo);
+        _cb_PRIO.setBounds(345, 190, 200, 20);
+        _cb_PRIO.addItemListener(this);
+
+        _cb_PPRIO = new Checkbox("Preemptive Priority (P-Prio)", false, _cbg_algo);
+        _cb_PPRIO.setBounds(345, 220, 200, 20);
+        _cb_PPRIO.addItemListener(this);
+
+        _cb_RR = new Checkbox("Round Robin (RR)", false, _cbg_algo);
+        _cb_RR.setBounds(345, 250, 200, 20);
+        _cb_RR.addItemListener(this);
+
+
         this.setLayout(null);
 
         this.add(_scrollpane);
 
-
-//		this.add(_lbl_arrival);
-//		this.add(_txt_arrival);
-//
-//		this.add(_lbl_burst);
-//		this.add(_txt_burst);
-//
-//		this.add(_lbl_priority);
-//		this.add(_txt_priority);
 
         this.add(_lbl_algorithm);
 
@@ -189,6 +206,13 @@ public class Client extends JFrame
 
         this.add(_btn_open);
         this.add(_btn_submit);
+        this.add(_btn_exit);
+
+        this.add(_cb_FCFS);
+        this.add(_cb_SJF);
+        this.add(_cb_PRIO);
+        this.add(_cb_PPRIO);
+        this.add(_cb_RR);
 
 
         this.setSize(600, 500);
@@ -263,7 +287,8 @@ public class Client extends JFrame
 
             String result = "";
 
-            while (!line.equals("bye")) {
+            String tmpResult = "";
+            while (!line.equals("EXIT")) {
                 JTextArea gantt = new JTextArea(5, 20);
                 _scrollpane = new JScrollPane(gantt);
                 gantt.setEditable(false);
@@ -272,8 +297,9 @@ public class Client extends JFrame
                 line = in.readLine();
                 //Giải mã dữ liệu bằng AES
                 result = decryptDataByAES(line, skeySpec);
-
-                if (result.equals("bye")) return;
+                tmpResult = result;
+                tmpResult = tmpResult.replace(" <-- ", " --> ");
+                if (result.equals("EXIT")) return;
                 if (!result.equals("RR")) {
                     gantt.setText(result);
                     _panel_gantt.add(gantt);
@@ -289,9 +315,8 @@ public class Client extends JFrame
                     gantt.setText(result);
                     _panel_gantt.add(gantt);
                     _panel_gantt.validate();
-
-
                 }
+                System.out.println(tmpResult);
             }
             in.close();
             out.close();
@@ -319,7 +344,6 @@ public class Client extends JFrame
     @Override
     public void actionPerformed(ActionEvent e) {
         String encryptedMessage = "";
-        String resultMessage = "";
         if (e.getSource() == _btn_open) {
             try {
                 String userDirLocation = System.getProperty("user.dir");
@@ -335,17 +359,23 @@ public class Client extends JFrame
                     tmp = f.toString();
                     System.out.println("file chooser: " + fileName);
                     nameFile.setText(fileName);
+                    out.write(fileName);
+                    out.newLine();
+                    out.flush();
                 }
+                File file = new File(f.getAbsolutePath());
+                Scanner sc = new Scanner(file);
                 String msgout = "";
-                msgout = tmp;
-                out.write(msgout);
-                out.newLine();
-                out.flush();
+                while (sc.hasNextLine()) {
+                    System.out.println(sc.nextLine());
+                    out.write(sc.nextLine());
+                    out.newLine();
+                    out.flush();
+                }
             }
             catch (Exception i) {
                 i.printStackTrace();
             }
-
         }
         if (e.getSource() == _btn_submit) {
             try {
@@ -353,13 +383,74 @@ public class Client extends JFrame
                 _panel_gantt.repaint();
                 _panel_gantt.validate();
                 _scrollpane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-                String msgout = "";
-                msgout = msg_text.getText();
-                String msgouttmp = msgout;
+                String algorithm = "";
+                if (this._algorithm == null) {
+                    JOptionPane.showMessageDialog(_panel_gantt, "Chọn thuật toán lập lịch cần tính!"
+                            , "Alert", JOptionPane.WARNING_MESSAGE);
+                }
+                else {
+                    algorithm = _algorithm.toString();
+                    System.out.println(algorithm);
+                    msg_text.setText(this._algorithm.toString());
+                    String algorithmTmp = algorithm;
+
+                    //Mã hóa lấn 1 bởi secretKey AES
+                    SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+                    encryptedMessage = encryptDataByAES(algorithmTmp, skeySpec);
+
+                    //Mã hóa lần 2 bởi publicKey RSA
+                    PublicKey pubKey = publicKey(PUBLIC_KEY);
+                    encryptedMessage = encryptDataByRSA(encryptedMessage, pubKey);
+
+                    out.write(encryptedMessage);
+                    out.newLine();
+                    out.flush();
+
+                    if (algorithm.equals("RR")) {
+                        while (true) {
+                            try {
+                                String temp = JOptionPane.showInputDialog("Quantum time: ");
+                                if (temp == null) return;
+                                if (temp.matches("-?\\d+(\\.\\d+)?")) {
+                                    if (Double.parseDouble(temp) > 0) {
+                                        //Mã hóa lấn 1 bởi secretKey AES
+                                        skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+                                        encryptedMessage = encryptDataByAES(temp, skeySpec);
+
+                                        //Mã hóa lần 2 bởi publicKey RSA
+                                        pubKey = publicKey(PUBLIC_KEY);
+                                        encryptedMessage = encryptDataByRSA(encryptedMessage, pubKey);
+                                        out.write(encryptedMessage);
+                                        out.newLine();
+                                        out.flush();
+                                        break;
+                                    } else {
+                                        JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
+                                                , "Alert", JOptionPane.WARNING_MESSAGE);
+                                    }
+                                } else {
+                                    JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
+                                            , "Alert", JOptionPane.WARNING_MESSAGE);
+                                }
+                            } catch (NumberFormatException nfe) {
+                                JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
+                                        , "Alert", JOptionPane.WARNING_MESSAGE);
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            msg_text.setText("");
+        }
+        if (e.getSource() == _btn_exit) {
+            try {
+                String EXIT = "EXIT";
 
                 //Mã hóa lấn 1 bởi secretKey AES
                 SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
-                encryptedMessage = encryptDataByAES(msgouttmp, skeySpec);
+                encryptedMessage = encryptDataByAES(EXIT, skeySpec);
 
                 //Mã hóa lần 2 bởi publicKey RSA
                 PublicKey pubKey = publicKey(PUBLIC_KEY);
@@ -368,48 +459,34 @@ public class Client extends JFrame
                 out.write(encryptedMessage);
                 out.newLine();
                 out.flush();
-
-                if (msgout.equals("RR")) {
-                    while (true) {
-                        try {
-                            String temp = JOptionPane.showInputDialog("Quantum time: ");
-                            if (temp.matches("-?\\d+(\\.\\d+)?")) {
-                                if (Double.parseDouble(temp) > 0) {
-                                    //Mã hóa lấn 1 bởi secretKey AES
-                                    skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
-                                    encryptedMessage = encryptDataByAES(temp, skeySpec);
-
-                                    //Mã hóa lần 2 bởi publicKey RSA
-                                    pubKey = publicKey(PUBLIC_KEY);
-                                    encryptedMessage = encryptDataByRSA(encryptedMessage, pubKey);
-                                    out.write(encryptedMessage);
-                                    out.newLine();
-                                    out.flush();
-                                    break;
-                                }
-                                else {
-                                    JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
-                                            , "Alert", JOptionPane.WARNING_MESSAGE);
-                                }
-                            }
-                            else {
-                                JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
-                                        , "Alert", JOptionPane.WARNING_MESSAGE);
-                            }
-                        } catch (NumberFormatException nfe) {
-                            JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
-                                    , "Alert", JOptionPane.WARNING_MESSAGE);
-                        }
-                    }
-                }
-                if (!msgout.equals("FCFS") && !msgout.equals("SJF") && !msgout.equals("Prio")
-                        && !msgout.equals("PPrio") && !msgout.equals("RR") && !msgout.equals("bye")) {
-                    JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại","Alert",JOptionPane.WARNING_MESSAGE);
-                }
-            } catch (IOException e1) {
-                e1.printStackTrace();
             }
-            msg_text.setText("");
+            catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        if(_cb_FCFS.getState())	{
+            _algorithm = Algorithm.FCFS;
+            msg_text.setText(_algorithm.toString());
+        }
+        if(_cb_SJF.getState())	{
+            _algorithm = Algorithm.SJF;
+            msg_text.setText(_algorithm.toString());
+        }
+        if(_cb_PRIO.getState())	{
+            _algorithm = Algorithm.Prio;
+            msg_text.setText(_algorithm.toString());
+        }
+        if(_cb_PPRIO.getState())	{
+            _algorithm = Algorithm.PPrio;
+            msg_text.setText(_algorithm.toString());
+        }
+        if(_cb_RR.getState())	{
+            _algorithm = Algorithm.RR;
+            msg_text.setText(_algorithm.toString());
         }
     }
 }

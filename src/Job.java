@@ -7,7 +7,6 @@ public class Job	{
 	private double _finish;
 	
 	private double _priority;
-	private double _deadline;
 
 	public Job(int _job_number, double _arrival, double _burst,
 			double _priority)	{

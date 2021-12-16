@@ -69,7 +69,7 @@ public class CPU_Scheduling {
 		Job tempJob = new Job();
 		double time = 0.0;
 		double idle = 0.0;
-		while( !_joblist.isEmpty() )	{
+		while( !_joblist.isEmpty() ) {
 			for(int i = 0; i < _joblist.size(); i++)	{
 				if( _joblist.get(i).getArrivalTime() <= time)
 					_queue.enqueue(_joblist.get(i));

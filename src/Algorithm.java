@@ -3,5 +3,6 @@ public enum Algorithm {
 	SJF,
 	Prio,
 	PPrio,
-	RR
+	RR,
+	EXIT
 }

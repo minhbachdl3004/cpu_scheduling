@@ -111,13 +111,13 @@ public class Server {
     String drawGanttChart(GanttChart _gantt_chart) {
         String tempGantt = "";
         System.out.print("0.0");
-        String result = "0.0 --> ";
+        String result = "0.0 ";
         String tmpGantt = "";
         for(int i = 0; i < _gantt_chart.getJobList().size(); i++) {
             System.out.print(" -----> " + _gantt_chart.getJobList().get(i) + " <----- " + _gantt_chart.getTimeList().get(i));
             tempGantt = " -----> " + _gantt_chart.getJobList().get(i) + " <----- " + _gantt_chart.getTimeList().get(i);
-            tmpGantt = _gantt_chart.getJobList().get(i) + " <-- " + _gantt_chart.getTimeList().get(i) + ";" + _gantt_chart.getTimeList().get(i) + " --> ";
-            result += tmpGantt;
+            tmpGantt = _gantt_chart.getJobList().get(i) + " <-- " + _gantt_chart.getTimeList().get(i) + _gantt_chart.getTimeList().get(i) + " --> ";
+            result += tempGantt;
         }
         System.out.println("\n\n");
         System.out.println(result);
@@ -268,11 +268,8 @@ public class Server {
 
             SecretKeySpec skeySpec = new SecretKeySpec(decryptOut, "AES");
 
-//            line = in.readLine();
-//            String path = line;
-//            System.out.println(line);
-            while (!line.equals("bye")) {
-                if (line.equals("bye")) return;
+            while (!line.equals("EXIT")) {
+                if (line.equals("EXIT")) return;
                 else {
                     try {
                         line = in.readLine();
