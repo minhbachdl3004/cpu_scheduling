@@ -19,9 +19,9 @@ import java.util.*;
 import java.net.*;
 import java.io.*;
 
+import Encryption.*;
+
 public class Server {
-    List<Job> _jobs;
-    Algorithm _algorithm;
     Double quantum;
     JFileChooser fileChooser;
     Scanner scanner;
@@ -31,177 +31,8 @@ public class Server {
     BufferedWriter out = null;
     BufferedReader in = null;
 
-    String decryptDataByRSA(String data, Key priKey) {
-        String result = "";
-        try {
-            //Giải mã bằng RSA
-            Cipher c = Cipher.getInstance("RSA");
-            c.init(Cipher.DECRYPT_MODE, priKey);
-            byte decryptOutData[] = c.doFinal(Base64.getDecoder().decode(data));
-            System.out.println("Dữ liệu sau khi giải mã bằng RSA: " + new String(decryptOutData));
-            result = new String(decryptOutData);
-        }
-        catch (NoSuchAlgorithmException | NoSuchPaddingException i) {
-            i.printStackTrace();
-        }
-        catch (IllegalBlockSizeException i) {
-            i.printStackTrace();
-        }
-        catch (BadPaddingException i) {
-            i.printStackTrace();
-        }
-        catch (InvalidKeyException i) {
-            i.printStackTrace();
-        }
-        return result;
-    }
-
-    String decryptDataByAES(String data, Key secKey) {
-        String result = "";
-        try {
-            //Giải mã bằng AES
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, secKey);
-            byte[] byteDecrypted = cipher.doFinal(Base64.getDecoder().decode(data));
-            String decrypted = new String(byteDecrypted);
-            System.out.println("Dữ liệu sau khi giải mã bằng AES: " + decrypted);
-            result = decrypted;
-        }
-        catch (NoSuchAlgorithmException | NoSuchPaddingException i) {
-            i.printStackTrace();
-        }
-        catch (IllegalBlockSizeException i) {
-            i.printStackTrace();
-        }
-        catch (BadPaddingException i) {
-            i.printStackTrace();
-        }
-        catch (InvalidKeyException i) {
-            i.printStackTrace();
-        }
-        return result;
-    }
-
-    String encryptDataByAES (String data, Key secKey) {
-        String result = "";
-        try {
-            //Mã hóa dữ liệu bằng AES
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.ENCRYPT_MODE, secKey);
-            byte[] byteEncryptedNew = cipher.doFinal(data.getBytes());
-            String encryptedDataNew = Base64.getEncoder().encodeToString(byteEncryptedNew);
-            System.out.println("Dữ liệu sau khi được mã hóa: " + encryptedDataNew);
-            result = encryptedDataNew;
-        }
-        catch (NoSuchAlgorithmException | NoSuchPaddingException i) {
-            i.printStackTrace();
-        }
-        catch (IllegalBlockSizeException i) {
-            i.printStackTrace();
-        }
-        catch (BadPaddingException i) {
-            i.printStackTrace();
-        }
-        catch (InvalidKeyException i) {
-            i.printStackTrace();
-        }
-        return result;
-    }
-
-    String drawGanttChart(GanttChart _gantt_chart) {
-        String tempGantt = "";
-        System.out.print("0.0");
-        String result = "0.0 ";
-        String tmpGantt = "";
-        for(int i = 0; i < _gantt_chart.getJobList().size(); i++) {
-            System.out.print(" -----> " + _gantt_chart.getJobList().get(i) + " <----- " + _gantt_chart.getTimeList().get(i));
-            tempGantt = " -----> " + _gantt_chart.getJobList().get(i) + " <----- " + _gantt_chart.getTimeList().get(i);
-            tmpGantt = _gantt_chart.getJobList().get(i) + " <-- " + _gantt_chart.getTimeList().get(i) + _gantt_chart.getTimeList().get(i) + " --> ";
-            result += tempGantt;
-        }
-        System.out.println("\n\n");
-        System.out.println(result);
-        System.out.println("\n\n");
-        return result;
-    }
-
-    public void actionPerformed() {
-        _jobs.removeAll(_jobs);
-        try {
-            int index = 0;
-
-            File file = new File("D:\\hoctap_minhbach\\cpu-scheduling-algorithms\\src\\input.txt");
-            Scanner sc = new Scanner(file);
-
-            while (sc.hasNextLine()) {
-                _jobs.add(
-                        new Job(_jobs.size() + 1, 0, 0,
-                                0, Double.POSITIVE_INFINITY)
-                );
-                String input = sc.nextLine();
-                StringTokenizer st = new StringTokenizer(input, ";");
-                String arrival = st.nextToken();
-                String burst = st.nextToken();
-                String priority = st.nextToken();
-                if (_jobs.isEmpty()) return;
-                try {
-                        _jobs.get(index).setArrivalTime(Double.parseDouble(arrival));
-                }
-                catch (Exception ex) {
-                }
-                try {
-                        _jobs.get(index).setBurstTime(Double.parseDouble(burst));
-
-                }
-                catch (Exception ex) {
-                }
-                try {
-                        _jobs.get(index).setPriority(Double.parseDouble(priority));
-                }
-                catch (Exception ex) {
-                }
-                index++;
-            }
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        }
-        if (_jobs.isEmpty()) {
-            return;
-        }
-        for (int i = 1; i <= _jobs.size(); i++)
-            _jobs.get(i - 1).setJobNumber(i);
-    }
-
-    public void itemStateChanged(String state)	{
-        switch(state) {
-            case "FCFS":
-                // code block
-                _algorithm = Algorithm.FCFS;
-                break;
-            case "SJF":
-                // code block
-                _algorithm = Algorithm.SJF;
-                break;
-            case "Prio":
-                // code block
-                _algorithm = Algorithm.Prio;
-                break;
-            case "PPrio":
-                // code block
-                _algorithm = Algorithm.PPrio;
-                break;
-            case "RR":
-                // code block
-                _algorithm = Algorithm.RR;
-                break;
-            default:
-                // code block
-                break;
-        }
-    }
 
     public Server(int port) throws IOException {
-        _jobs = new ArrayList<Job>();
         try {
             server = new ServerSocket(port);
             System.out.println("Server started");
@@ -276,35 +107,35 @@ public class Server {
                         System.out.println("Server received: " + line);
 
                         //Giải mã lần 1 bởi RSA
-                        decryptData = decryptDataByRSA(line, priKey);
+                        decryptData = Decryption.decryptDataByRSA(line, priKey);
 
                         //Giải mã lần 2 bởi AES
-                        decryptData = decryptDataByAES(decryptData, skeySpec);
+                        decryptData = Decryption.decryptDataByAES(decryptData, skeySpec);
 
                         System.out.println("Sau khi giải mã 2 lần: " +decryptData);
 
                         line = decryptData;
-                        actionPerformed();
-                        itemStateChanged(line);
+                        App.actionPerformed();
+                        App.itemStateChanged(line);
                         System.out.println("==================================");
 
                         if (line.equals("RR")) {
                             _quantum = in.readLine();
                             //Giải mã lần 1 bởi RSA
-                            decryptData = decryptDataByRSA(_quantum, priKey);
+                            decryptData = Decryption.decryptDataByRSA(_quantum, priKey);
 
                             //Giải mã lần 2 bởi AES
-                            decryptData = decryptDataByAES(decryptData, skeySpec);
+                            decryptData = Decryption.decryptDataByAES(decryptData, skeySpec);
 
                             quantum = Double.parseDouble(decryptData);
-                            CPU_Scheduling _solver_RR = new CPU_Scheduling(_jobs, _algorithm, quantum);
+                            CPU_Scheduling _solver_RR = new CPU_Scheduling(App._jobs, App._algorithm, quantum);
                             if (_solver_RR.solve()) {
                                 String result = "";
-                                drawGanttChart(_solver_RR.getGanttChart());
-                                result = drawGanttChart(_solver_RR.getGanttChart());
+                                App.drawGanttChart(_solver_RR.getGanttChart());
+                                result = App.drawGanttChart(_solver_RR.getGanttChart());
 
                                 //Mã hóa dữ liệu mới bằng AES
-                                result = encryptDataByAES(result, skeySpec);
+                                result = Encryption.encryptDataByAES(result, skeySpec);
                                 System.out.println("Dữ liệu đã dc mã hóa là: " + result);
                                 out.write(result);
                                 out.newLine();
@@ -312,14 +143,14 @@ public class Server {
                             }
                         }
                         if (line.equals("FCFS") || line.equals("SJF") || line.equals("Prio") || line.equals("PPrio")){
-                            CPU_Scheduling _solver = new CPU_Scheduling(_jobs, _algorithm);
+                            CPU_Scheduling _solver = new CPU_Scheduling(App._jobs, App._algorithm);
                             if (_solver.solve()) {
                                 String result = "";
-                                drawGanttChart(_solver.getGanttChart());
-                                result = drawGanttChart(_solver.getGanttChart());
+                                App.drawGanttChart(_solver.getGanttChart());
+                                result = App.drawGanttChart(_solver.getGanttChart());
 
                                 //Mã hóa dữ liệu mới bằng AES
-                                result = encryptDataByAES(result, skeySpec);
+                                result = Encryption.encryptDataByAES(result, skeySpec);
                                 System.out.println("Dữ liệu đã dc mã hóa là: " + result);
                                 out.write(result);
                                 out.newLine();

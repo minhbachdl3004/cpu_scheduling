@@ -17,7 +17,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Scanner;
-
+import Encryption.*;
 
 public class Client extends JFrame
         implements ActionListener, ItemListener {
@@ -52,91 +52,6 @@ public class Client extends JFrame
     String SECRET_KEY = "stackjava.com.if";
 
     String PUBLIC_KEY;
-
-    String encryptDataByAES (String data, Key seckey) {
-        String result = "";
-        try {
-            //Mã hóa dữ liệu bằng AES
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.ENCRYPT_MODE, seckey);
-            byte[] byteEncrypted = cipher.doFinal(data.getBytes());
-            String encryptedData = Base64.getEncoder().encodeToString(byteEncrypted);
-            System.out.println("Dữ liệu sau khi được mã hóa: " + encryptedData);
-            result = encryptedData;
-        }
-        catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        }
-        catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-        catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        catch (InvalidKeyException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
-    String encryptDataByRSA (String data, Key pubKey) {
-        String result = "";
-        try {
-            Cipher c = Cipher.getInstance("RSA");
-            c.init(Cipher.ENCRYPT_MODE, pubKey);
-            byte encryptOutData[] = c.doFinal(data.getBytes());
-            String encryptedData = Base64.getEncoder().encodeToString(encryptOutData);
-            System.out.println("Chuỗi sau khi mã hoá lần 2: " + "\n" + encryptedData);
-            result = encryptedData;
-        }
-        catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        }
-        catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-        catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        catch (InvalidKeyException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
-    String decryptDataByAES (String data, Key secKey) {
-        String result = "";
-        try {
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, secKey);
-            byte[] byteDecrypted = cipher.doFinal(Base64.getDecoder().decode(data));
-            String decryptedData = new String(byteDecrypted);
-            System.out.println("Dữ liệu sau khi giải mã là: " + decryptedData);
-            result = decryptedData;
-        }
-        catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        }
-        catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-        catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        catch (InvalidKeyException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
 
     void initUI()	{
 
@@ -296,7 +211,7 @@ public class Client extends JFrame
                 gantt.setBackground(getBackground());
                 line = in.readLine();
                 //Giải mã dữ liệu bằng AES
-                result = decryptDataByAES(line, skeySpec);
+                result = Decryption.decryptDataByAES(line, skeySpec);
                 tmpResult = result;
                 tmpResult = tmpResult.replace(" <-- ", " --> ");
                 if (result.equals("EXIT")) return;
@@ -396,11 +311,11 @@ public class Client extends JFrame
 
                     //Mã hóa lấn 1 bởi secretKey AES
                     SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
-                    encryptedMessage = encryptDataByAES(algorithmTmp, skeySpec);
+                    encryptedMessage = Encryption.encryptDataByAES(algorithmTmp, skeySpec);
 
                     //Mã hóa lần 2 bởi publicKey RSA
                     PublicKey pubKey = publicKey(PUBLIC_KEY);
-                    encryptedMessage = encryptDataByRSA(encryptedMessage, pubKey);
+                    encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
 
                     out.write(encryptedMessage);
                     out.newLine();
@@ -415,11 +330,11 @@ public class Client extends JFrame
                                     if (Double.parseDouble(temp) > 0) {
                                         //Mã hóa lấn 1 bởi secretKey AES
                                         skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
-                                        encryptedMessage = encryptDataByAES(temp, skeySpec);
+                                        encryptedMessage = Encryption.encryptDataByAES(temp, skeySpec);
 
                                         //Mã hóa lần 2 bởi publicKey RSA
                                         pubKey = publicKey(PUBLIC_KEY);
-                                        encryptedMessage = encryptDataByRSA(encryptedMessage, pubKey);
+                                        encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
                                         out.write(encryptedMessage);
                                         out.newLine();
                                         out.flush();
@@ -450,11 +365,11 @@ public class Client extends JFrame
 
                 //Mã hóa lấn 1 bởi secretKey AES
                 SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
-                encryptedMessage = encryptDataByAES(EXIT, skeySpec);
+                encryptedMessage = Encryption.encryptDataByAES(EXIT, skeySpec);
 
                 //Mã hóa lần 2 bởi publicKey RSA
                 PublicKey pubKey = publicKey(PUBLIC_KEY);
-                encryptedMessage = encryptDataByRSA(encryptedMessage, pubKey);
+                encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
 
                 out.write(encryptedMessage);
                 out.newLine();
