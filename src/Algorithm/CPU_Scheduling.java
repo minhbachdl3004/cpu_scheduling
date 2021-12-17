@@ -1,6 +1,8 @@
-import java.util.*;
+package Algorithm;
 
-import javax.swing.*;
+import Algorithm.Algorithm;
+
+import java.util.*;
 
 public class CPU_Scheduling {
 
@@ -36,12 +38,12 @@ public class CPU_Scheduling {
 
 	}
 
-	GanttChart getGanttChart()	{
+	public GanttChart getGanttChart()	{
 		return _gantt_chart;
 	}
 
 
-	boolean solve()	{
+	public boolean solve()	{
 		sortArrival();
 		if( _algorithm == Algorithm.FCFS ||
 				_algorithm == Algorithm.SJF ||

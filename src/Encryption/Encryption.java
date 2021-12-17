@@ -19,7 +19,6 @@ public class Encryption {
             cipher.init(Cipher.ENCRYPT_MODE, secKey);
             byte[] byteEncryptedNew = cipher.doFinal(data.getBytes());
             String encryptedDataNew = Base64.getEncoder().encodeToString(byteEncryptedNew);
-            System.out.println("Dữ liệu sau khi được mã hóa: " + encryptedDataNew);
             result = encryptedDataNew;
         }
         catch (NoSuchAlgorithmException | NoSuchPaddingException i) {
@@ -45,7 +44,6 @@ public class Encryption {
             c.init(Cipher.ENCRYPT_MODE, pubKey);
             byte encryptOutData[] = c.doFinal(data.getBytes());
             String encryptedData = Base64.getEncoder().encodeToString(encryptOutData);
-            System.out.println("Chuỗi sau khi mã hoá lần 2: " + "\n" + encryptedData);
             result = encryptedData;
         }
         catch (NoSuchPaddingException e) {

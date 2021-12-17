@@ -31,7 +31,7 @@ public class mainGUI extends JFrame
         _scrollpane.setBounds(20, 20, 540, 100);
         _font_job = new Font("Times New Roman", Font.PLAIN, 16);
 
-        _lbl_algorithm = new JLabel("Algorithm: ");
+        _lbl_algorithm = new JLabel("Algorithm.Algorithm: ");
         _lbl_algorithm.setBounds(20, 130, 100, 30);
 
         _fr_text = new JTextArea("");

@@ -1,3 +1,7 @@
+package Algorithm;
+
+import Algorithm.Algorithm;
+
 import java.util.*;
 
 public class PriorityQueue	{
@@ -34,7 +38,7 @@ public class PriorityQueue	{
 
 	public void printQueue()	{
 		for( Job job : _queue )
-			System.out.println("Job"+job.getJobNumber());
+			System.out.println("Algorithm.Job"+job.getJobNumber());
 	}
 
 	public void sort()	{

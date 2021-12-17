@@ -1,3 +1,5 @@
+package Algorithm;
+
 public enum Algorithm {
 	FCFS, 
 	SJF,

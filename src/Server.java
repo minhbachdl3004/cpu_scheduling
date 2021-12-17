@@ -7,10 +7,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -18,6 +14,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 import java.net.*;
 import java.io.*;
+import Algorithm.*;
 
 import Encryption.*;
 
@@ -30,7 +27,10 @@ public class Server {
     private ServerSocket server = null;
     BufferedWriter out = null;
     BufferedReader in = null;
-
+    String check_txt = "\\w+\\.txt";
+    String filePath;
+    private BufferedWriter writer;
+    String []temp;
 
     public Server(int port) throws IOException {
         try {
@@ -48,7 +48,7 @@ public class Server {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
             kpg.initialize(512, sr);
 
-            // Khởi tạo cặp khóa
+            // Key Pair Initialize
             KeyPair kp = kpg.genKeyPair();
 
             // PublicKey
@@ -57,29 +57,29 @@ public class Server {
             // PrivateKey
             PrivateKey privateKey = kp.getPrivate();
 
-            //Tạp private key
+            //Generator private key
             PKCS8EncodedKeySpec spec_en = new PKCS8EncodedKeySpec(privateKey.getEncoded());
             KeyFactory factory_en = KeyFactory.getInstance("RSA");
             PrivateKey priKey = factory_en.generatePrivate(spec_en);
 
-            // Tạo public key
+            //Generator public key
             X509EncodedKeySpec spec_de = new X509EncodedKeySpec(publicKey.getEncoded());
             KeyFactory factory_de = KeyFactory.getInstance("RSA");
             PublicKey pubKey = factory_de.generatePublic(spec_de);
 
             String pubKeyEncode = Base64.getEncoder().encodeToString(pubKey.getEncoded());
 
-            //Server đưa public Key vào JSONObject
+            //Server put public Key into JSONObject
             JSONObject json = new JSONObject();
             json.put("publicKey", pubKeyEncode);
             String publicKeyTrans = json.toString();
 
-            //Server gửi public Key cho Client
+            //Server send public Key to Client
             out.write(publicKeyTrans);
             out.newLine();
             out.flush();
 
-            //Server nhận secret key đã dc mã hóa bởi Client
+            //Server receive encrypted secret Key by Client
             line = in.readLine();
             System.out.println("Server received: " + line);
 
@@ -89,89 +89,110 @@ public class Server {
             String secretKeyEncrypt = jsonObject.get("secretKey").toString();
             System.out.println("SecretKey: " + secretKeyEncrypt);
 
-            // Giải mã secret Key
-            Cipher c = Cipher.getInstance("RSA");
-            c.init(Cipher.DECRYPT_MODE, priKey);
-            byte decryptOut[] = c.doFinal(Base64.getDecoder().decode(secretKeyEncrypt));
-            System.out.println("Dữ liệu sau khi giải mã: " + new String(decryptOut));
+            //Server decrpyt secret Key by private Key from Client
+            String decryptOut = Decryption.decryptDataByRSA(secretKeyEncrypt, priKey);
+
+            SecretKeySpec skeySpec = new SecretKeySpec(decryptOut.getBytes(), "AES");
 
             String decryptData = "";
 
-            SecretKeySpec skeySpec = new SecretKeySpec(decryptOut, "AES");
-
             while (!line.equals("EXIT")) {
-                if (line.equals("EXIT")) return;
-                else {
-                    try {
-                        line = in.readLine();
-                        System.out.println("Server received: " + line);
+                try {
+                    boolean flag = true;
+                    line = in.readLine();
+                    //Decrypt first time by RSA
+                    decryptData = Decryption.decryptDataByRSA(line, priKey);
 
-                        //Giải mã lần 1 bởi RSA
+                    //Decrypt second time by AES
+                    decryptData = Decryption.decryptDataByAES(decryptData, skeySpec);
+                    line = decryptData;
+                    System.out.println(line);
+                    if (line.equals("EXIT")) return;
+                    if (line.matches(check_txt)) {
+                        System.out.println(line);
+                        File file = new File("./src/dataServer/S_" + line);
+                        file.createNewFile();
+                        filePath = file.getAbsolutePath();
+                        writer = new BufferedWriter(new FileWriter(file, false));
+
+                        line = in.readLine();
+                        //Decrypt first time by RSA
                         decryptData = Decryption.decryptDataByRSA(line, priKey);
 
-                        //Giải mã lần 2 bởi AES
+                        //Decrypt second time by AES
                         decryptData = Decryption.decryptDataByAES(decryptData, skeySpec);
-
-                        System.out.println("Sau khi giải mã 2 lần: " +decryptData);
-
                         line = decryptData;
-                        App.actionPerformed();
-                        App.itemStateChanged(line);
-                        System.out.println("==================================");
-
-                        if (line.equals("RR")) {
-                            _quantum = in.readLine();
-                            //Giải mã lần 1 bởi RSA
-                            decryptData = Decryption.decryptDataByRSA(_quantum, priKey);
-
-                            //Giải mã lần 2 bởi AES
-                            decryptData = Decryption.decryptDataByAES(decryptData, skeySpec);
-
-                            quantum = Double.parseDouble(decryptData);
-                            CPU_Scheduling _solver_RR = new CPU_Scheduling(App._jobs, App._algorithm, quantum);
-                            if (_solver_RR.solve()) {
-                                String result = "";
-                                App.drawGanttChart(_solver_RR.getGanttChart());
-                                result = App.drawGanttChart(_solver_RR.getGanttChart());
-
-                                //Mã hóa dữ liệu mới bằng AES
-                                result = Encryption.encryptDataByAES(result, skeySpec);
-                                System.out.println("Dữ liệu đã dc mã hóa là: " + result);
-                                out.write(result);
-                                out.newLine();
-                                out.flush();
+                        while (line != null && flag) {
+                            System.out.println("data nhận:" + line);
+                            temp = line.split(":");
+                            for (int i = 0; i < temp.length; i++) {
+                                writer.write(temp[i]);
+                                System.out.println(temp[i]);
+                                writer.newLine();
+                                writer.flush();
                             }
-                        }
-                        if (line.equals("FCFS") || line.equals("SJF") || line.equals("Prio") || line.equals("PPrio")){
-                            CPU_Scheduling _solver = new CPU_Scheduling(App._jobs, App._algorithm);
-                            if (_solver.solve()) {
-                                String result = "";
-                                App.drawGanttChart(_solver.getGanttChart());
-                                result = App.drawGanttChart(_solver.getGanttChart());
-
-                                //Mã hóa dữ liệu mới bằng AES
-                                result = Encryption.encryptDataByAES(result, skeySpec);
-                                System.out.println("Dữ liệu đã dc mã hóa là: " + result);
-                                out.write(result);
-                                out.newLine();
-                                out.flush();
-                            }
+                            flag = false;
                         }
                     }
-                    catch (IOException i) {
-                        System.out.println(i);
+                    else {
+                        try {
+                            System.out.println("Server received: " + line);
+
+                            System.out.println(filePath);
+                            App.actionPerformed(filePath);
+                            App.itemStateChanged(line);
+                            System.out.println("==================================");
+
+                            if (line.equals("RR")) {
+                                _quantum = in.readLine();
+                                //Decrypt first time by RSA
+                                decryptData = Decryption.decryptDataByRSA(_quantum, priKey);
+
+                                //Decrypt second time by AES
+                                decryptData = Decryption.decryptDataByAES(decryptData, skeySpec);
+
+                                quantum = Double.parseDouble(decryptData);
+                                CPU_Scheduling _solver_RR = new CPU_Scheduling(App._jobs, App._algorithm, quantum);
+                                if (_solver_RR.solve()) {
+                                    String result = "";
+                                    App.drawGanttChart(_solver_RR.getGanttChart());
+                                    result = App.drawGanttChart(_solver_RR.getGanttChart());
+
+                                    //Encrypt data by AES
+                                    result = Encryption.encryptDataByAES(result, skeySpec);
+                                    System.out.println("Dữ liệu đã dc mã hóa là: " + result);
+                                    out.write(result);
+                                    out.newLine();
+                                    out.flush();
+                                }
+                            }
+                            if (line.equals("FCFS") || line.equals("SJF") || line.equals("Prio") || line.equals("PPrio")) {
+                                CPU_Scheduling _solver = new CPU_Scheduling(App._jobs, App._algorithm);
+                                if (_solver.solve()) {
+                                    String result = "";
+                                    App.drawGanttChart(_solver.getGanttChart());
+                                    result = App.drawGanttChart(_solver.getGanttChart());
+
+                                    //Encrypt data by AES
+                                    result = Encryption.encryptDataByAES(result, skeySpec);
+                                    System.out.println("Dữ liệu đã dc mã hóa là: " + result);
+                                    out.write(result);
+                                    out.newLine();
+                                    out.flush();
+                                }
+                            }
+                        } catch (IOException i) {
+                            System.out.println(i);
+                        }
                     }
+                }
+                catch (Exception i) {
+                    System.out.println(i);
                 }
             }
         }
-        catch (IOException | JSONException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException i) {
+        catch (IOException | JSONException | NoSuchAlgorithmException | InvalidKeySpecException i) {
             System.out.println(i);
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
         }
     }
 

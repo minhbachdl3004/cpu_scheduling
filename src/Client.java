@@ -1,9 +1,11 @@
+import Algorithm.Algorithm;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,6 +14,8 @@ import java.awt.event.ItemListener;
 import java.net.*;
 import java.io.*;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -33,6 +37,8 @@ public class Client extends JFrame
 
     JButton _btn_open;
     JButton _btn_submit;
+    JButton _btn_send;
+    JButton _btn_exit;
 
     CheckboxGroup _cbg_algo;
     Checkbox _cb_FCFS;
@@ -41,7 +47,6 @@ public class Client extends JFrame
     Checkbox _cb_PPRIO;
     Checkbox _cb_RR;
 
-    JButton _btn_exit;
 
     Algorithm _algorithm;
 
@@ -52,6 +57,8 @@ public class Client extends JFrame
     String SECRET_KEY = "stackjava.com.if";
 
     String PUBLIC_KEY;
+    public String filename;
+    public String fileNeedCreate;
 
     void initUI()	{
 
@@ -82,6 +89,10 @@ public class Client extends JFrame
         _btn_open.setBounds(20, 200, 100, 40);
         _btn_open.addActionListener(this);
 
+        _btn_send = new JButton("Send File");
+        _btn_send.setBounds(240, 200, 100, 40);
+        _btn_send.addActionListener(this);
+
         _btn_exit = new JButton("EXIT");
         _btn_exit.setBounds(20, 280, 200, 60);
         _btn_exit.addActionListener(this);
@@ -92,7 +103,7 @@ public class Client extends JFrame
         _cb_FCFS.setBounds(345, 130, 200, 20);
         _cb_FCFS.addItemListener(this);
 
-        _cb_SJF = new Checkbox("Shortest Job First (SJF)", false, _cbg_algo);
+        _cb_SJF = new Checkbox("Shortest Algorithm.Job First (SJF)", false, _cbg_algo);
         _cb_SJF.setBounds(345, 160, 200, 20);
         _cb_SJF.addItemListener(this);
 
@@ -121,6 +132,7 @@ public class Client extends JFrame
 
         this.add(_btn_open);
         this.add(_btn_submit);
+        this.add(_btn_send);
         this.add(_btn_exit);
 
         this.add(_cb_FCFS);
@@ -183,13 +195,8 @@ public class Client extends JFrame
             KeyFactory factory = KeyFactory.getInstance("RSA");
             PublicKey pubKey = factory.generatePublic(spec);
 
-            // Mã hoá dữ liệu bằng RSA
-            Cipher c = Cipher.getInstance("RSA");
-            c.init(Cipher.ENCRYPT_MODE, pubKey);
-            String msg = SECRET_KEY;
-            byte encryptOut[] = c.doFinal(msg.getBytes());
-            String strEncrypt = Base64.getEncoder().encodeToString(encryptOut);
-            System.out.println("Chuỗi sau khi mã hoá: " + "\n" + strEncrypt);
+            //Encrypt secretKey by RSA
+            String strEncrypt = Encryption.encryptDataByRSA(SECRET_KEY, pubKey);
 
             String encryptSecretKey = strEncrypt;
             JSONObject jsonObject1 = new JSONObject();
@@ -210,7 +217,7 @@ public class Client extends JFrame
                 gantt.setFont(_font_job);
                 gantt.setBackground(getBackground());
                 line = in.readLine();
-                //Giải mã dữ liệu bằng AES
+                //Decrypt data by AES
                 result = Decryption.decryptDataByAES(line, skeySpec);
                 tmpResult = result;
                 tmpResult = tmpResult.replace(" <-- ", " --> ");
@@ -237,17 +244,8 @@ public class Client extends JFrame
             out.close();
             socket.close();
         }
-        catch (IOException | JSONException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException i) {
+        catch (IOException | JSONException | NoSuchAlgorithmException | InvalidKeySpecException i) {
             System.out.println(i);
-        }
-        catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        }
-        catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
-        catch (InvalidKeyException e) {
-            e.printStackTrace();
         }
     }
 
@@ -258,38 +256,90 @@ public class Client extends JFrame
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        Path currentRelativePath = Paths.get("");
+        String s = currentRelativePath.toAbsolutePath().toString();
+
+        JFileChooser openFileChooser = new JFileChooser();
+        openFileChooser.setCurrentDirectory(new File(s));
+        openFileChooser.setFileFilter(new FileNameExtensionFilter("Chỉ chọn file đuôi .txt", "txt"));
+
         String encryptedMessage = "";
         if (e.getSource() == _btn_open) {
-            try {
-                String userDirLocation = System.getProperty("user.dir");
-                File userDir = new File(userDirLocation);
-                // default to user directory
-                JFileChooser fileChooser = new JFileChooser(userDir);
-                File f = null;
-                String tmp = "";
-                int result = fileChooser.showOpenDialog(null);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    f = fileChooser.getSelectedFile().getAbsoluteFile();
-                    String fileName = f.getName();
-                    tmp = f.toString();
-                    System.out.println("file chooser: " + fileName);
-                    nameFile.setText(fileName);
-                    out.write(fileName);
-                    out.newLine();
-                    out.flush();
-                }
-                File file = new File(f.getAbsolutePath());
-                Scanner sc = new Scanner(file);
-                String msgout = "";
-                while (sc.hasNextLine()) {
-                    System.out.println(sc.nextLine());
-                    out.write(sc.nextLine());
-                    out.newLine();
-                    out.flush();
-                }
+            int returnValue = openFileChooser.showOpenDialog(null);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                // set the label to the path of the selected file
+                filename = openFileChooser.getSelectedFile().getAbsolutePath();
+                nameFile.setText(filename);
+                fileNeedCreate = openFileChooser.getSelectedFile().getName();
             }
-            catch (Exception i) {
-                i.printStackTrace();
+            // if the user cancelled the operation
+            else {
+                JOptionPane.showMessageDialog(_panel_gantt, "Hãy chọn file cần thực hiện tìm đường đi ngắn nhất", "Alert",
+                        JOptionPane.WARNING_MESSAGE);
+                nameFile.setText("hãy chọn file cần thực hiện");
+            }
+        }
+        if (e.getSource() == _btn_send) {
+            BufferedReader readfile = null;
+            if (fileNeedCreate == null && filename == null) {
+                JOptionPane.showMessageDialog(_panel_gantt, "Hãy chọn file cần thực hiện tìm đường đi ngắn nhất", "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
+                nameFile.setText(" Hãy chọn file cần thực hiện!!");
+            } else {
+                try {
+                    boolean flag = true;
+                    readfile = new BufferedReader(new FileReader(filename));
+                    String line = "";
+                    String tmp = "";
+
+                    System.out.println("name: " + fileNeedCreate);
+                    //Encrypt first time by secretKey AES
+                    SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+                    encryptedMessage = Encryption.encryptDataByAES(fileNeedCreate, skeySpec);
+
+                    //Encrypt second time by publicKey RSA
+                    PublicKey pubKey = publicKey(PUBLIC_KEY);
+                    encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
+
+                    out.write(encryptedMessage);
+                    out.newLine();
+                    out.flush();
+
+                    String map = "\\d+(\\.\\d+)?+;{1}+\\d+(\\.\\d+)?+;{1}+\\d+(\\.\\d+)?+";
+
+                    while ((line = readfile.readLine()) != null) {
+                        if (line.matches(map)) {
+                            tmp = tmp + line + ":";
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu trong " + fileNeedCreate + " sai yêu cầu \n"
+                                            + "hãy kiểm tra tại dòng (" + line + ") và sửa theo đúng format \n", "Thông báo",
+                                    JOptionPane.WARNING_MESSAGE);
+                            nameFile.setText("Hãy nhập dữ liệu đúng");
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (flag) {
+                        System.out.println(tmp);
+                        //Encrypt first time by secretKey AES
+                        skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+                        encryptedMessage = Encryption.encryptDataByAES(tmp, skeySpec);
+
+                        //Encrypt second time by publicKey RSA
+                        pubKey = publicKey(PUBLIC_KEY);
+                        encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
+
+                        System.out.println("file sau khi mã hóa 2 lần :" + encryptedMessage);
+                        out.write(encryptedMessage);
+                        out.newLine();
+                        out.flush();
+                    }
+                } catch (FileNotFoundException fileNotFoundException) {
+                    fileNotFoundException.printStackTrace();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
             }
         }
         if (e.getSource() == _btn_submit) {
@@ -299,6 +349,11 @@ public class Client extends JFrame
                 _panel_gantt.validate();
                 _scrollpane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
                 String algorithm = "";
+                if (fileNeedCreate == null && filename == null) {
+                    JOptionPane.showMessageDialog(_panel_gantt, "Hãy chọn file cần thực hiện dể giải bài toán lập lịch CPU", "Thông báo",
+                            JOptionPane.WARNING_MESSAGE);
+                    nameFile.setText(" Hãy chọn file cần thực hiện!!");
+                }
                 if (this._algorithm == null) {
                     JOptionPane.showMessageDialog(_panel_gantt, "Chọn thuật toán lập lịch cần tính!"
                             , "Alert", JOptionPane.WARNING_MESSAGE);
@@ -309,11 +364,11 @@ public class Client extends JFrame
                     msg_text.setText(this._algorithm.toString());
                     String algorithmTmp = algorithm;
 
-                    //Mã hóa lấn 1 bởi secretKey AES
+                    //Encrypt first time by secretKey AES
                     SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
                     encryptedMessage = Encryption.encryptDataByAES(algorithmTmp, skeySpec);
 
-                    //Mã hóa lần 2 bởi publicKey RSA
+                    //Encrypt second time by publicKey RSA
                     PublicKey pubKey = publicKey(PUBLIC_KEY);
                     encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
 
@@ -326,23 +381,18 @@ public class Client extends JFrame
                             try {
                                 String temp = JOptionPane.showInputDialog("Quantum time: ");
                                 if (temp == null) return;
-                                if (temp.matches("-?\\d+(\\.\\d+)?")) {
-                                    if (Double.parseDouble(temp) > 0) {
-                                        //Mã hóa lấn 1 bởi secretKey AES
-                                        skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
-                                        encryptedMessage = Encryption.encryptDataByAES(temp, skeySpec);
+                                if (temp.matches("\\d+(\\.\\d+)?")) {
+                                    //Encrypt first time by secretKey AES
+                                    skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+                                    encryptedMessage = Encryption.encryptDataByAES(temp, skeySpec);
 
-                                        //Mã hóa lần 2 bởi publicKey RSA
-                                        pubKey = publicKey(PUBLIC_KEY);
-                                        encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
-                                        out.write(encryptedMessage);
-                                        out.newLine();
-                                        out.flush();
-                                        break;
-                                    } else {
-                                        JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
-                                                , "Alert", JOptionPane.WARNING_MESSAGE);
-                                    }
+                                    //Encrypt second time by publicKey RSA
+                                    pubKey = publicKey(PUBLIC_KEY);
+                                    encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
+                                    out.write(encryptedMessage);
+                                    out.newLine();
+                                    out.flush();
+                                    break;
                                 } else {
                                     JOptionPane.showMessageDialog(_panel_gantt, "Dữ liệu truyền vào không đúng. Nhập lại"
                                             , "Alert", JOptionPane.WARNING_MESSAGE);
@@ -357,17 +407,17 @@ public class Client extends JFrame
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-            msg_text.setText("");
         }
+        msg_text.setText("");
         if (e.getSource() == _btn_exit) {
             try {
                 String EXIT = "EXIT";
 
-                //Mã hóa lấn 1 bởi secretKey AES
+                //Encrypt first time by secretKey AES
                 SecretKeySpec skeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
                 encryptedMessage = Encryption.encryptDataByAES(EXIT, skeySpec);
 
-                //Mã hóa lần 2 bởi publicKey RSA
+                //Encrypt second time by publicKey RSA
                 PublicKey pubKey = publicKey(PUBLIC_KEY);
                 encryptedMessage = Encryption.encryptDataByRSA(encryptedMessage, pubKey);
 

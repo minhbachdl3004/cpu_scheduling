@@ -1,3 +1,7 @@
+package Algorithm;
+
+import Algorithm.Algorithm;
+
 import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,18 +11,17 @@ import java.util.Scanner;
 import java.util.StringTokenizer;
 
 public class App {
-    static List<Job> _jobs;
-    static Algorithm _algorithm;
+    public static List<Job> _jobs;
+    public static Algorithm _algorithm;
     Double quantum;
     JFileChooser fileChooser;
     Scanner scanner;
 
-    public static void actionPerformed() {
+    public static void actionPerformed(String filePath) {
         _jobs = new ArrayList<Job>();
         try {
             int index = 0;
-
-            File file = new File("D:\\hoctap_minhbach\\cpu-scheduling-algorithms\\src\\input.txt");
+            File file = new File(filePath);
             Scanner sc = new Scanner(file);
 
             while (sc.hasNextLine()) {
@@ -60,7 +63,7 @@ public class App {
             _jobs.get(i - 1).setJobNumber(i);
     }
 
-    static String drawGanttChart(GanttChart _gantt_chart) {
+    public static String drawGanttChart(GanttChart _gantt_chart) {
         String tempGantt = "";
         System.out.print("0.0");
         String result = "0.0 ";
